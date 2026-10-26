@@ -13,6 +13,8 @@ import {
   AppState,
   AppStateStatus,
   Image,
+  ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,6 +55,8 @@ import {
 
 function AppContent() {
   const { isDark, colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isNarrow = windowWidth < 520;
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('meetings');
 
@@ -412,7 +416,7 @@ function AppContent() {
                 onDelete={handleDeleteMeeting}
               />
             )}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <View style={styles.tabHeader}>
@@ -465,48 +469,65 @@ function AppContent() {
               ) : null}
             </View>
 
-            {/* Domain Filter Chips & Export Button */}
-            <View style={styles.domainRowHeader}>
-              <View style={styles.domainFiltersScroll}>
-                {domainFilters.map((dom) => (
-                  <TouchableOpacity
-                    key={dom}
-                    style={[
-                      styles.domainChip,
-                      selectedDomain === dom
-                        ? {
-                            backgroundColor: colors.primary,
-                            borderColor: colors.primary,
-                          }
-                        : {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.cardBorder,
-                          },
-                    ]}
-                    onPress={() => setSelectedDomain(dom)}
-                  >
-                    <Text
+            {/* Domain Filter Chips (Horizontal Swipeable Row) */}
+            <View style={styles.domainSection}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.domainChipsScroll}
+              >
+                {domainFilters.map((dom) => {
+                  const isSelected = selectedDomain === dom;
+                  return (
+                    <TouchableOpacity
+                      key={dom}
                       style={[
-                        styles.domainChipText,
-                        {
-                          color:
-                            selectedDomain === dom
+                        styles.domainChip,
+                        isSelected
+                          ? {
+                              backgroundColor: colors.primary,
+                              borderColor: colors.primary,
+                            }
+                          : {
+                              backgroundColor: colors.surface,
+                              borderColor: colors.cardBorder,
+                            },
+                      ]}
+                      onPress={() => setSelectedDomain(dom)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.domainChipText,
+                          {
+                            color: isSelected
                               ? (isDark ? '#070707' : '#FFFFFF')
                               : colors.textSecondary,
-                          fontWeight: selectedDomain === dom ? '800' : '600',
-                        },
-                      ]}
-                    >
-                      {dom}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                            fontWeight: isSelected ? '800' : '600',
+                          },
+                        ]}
+                      >
+                        {dom}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Utility Sub-Bar: Filtered Count + Import & Export Actions */}
+            <View style={styles.utilityBar}>
+              <View style={styles.countBadge}>
+                <Text style={[styles.countBadgeText, { color: colors.textMuted }]}>
+                  {filteredMembersList.length} {filteredMembersList.length === 1 ? 'member' : 'members'}
+                  {selectedDomain !== 'All' ? ` • ${selectedDomain}` : ''}
+                </Text>
               </View>
 
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity
                   style={[
-                    styles.importRosterBtn,
+                    styles.utilityActionBtn,
                     {
                       backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
                       borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
@@ -516,7 +537,7 @@ function AppContent() {
                   activeOpacity={0.7}
                 >
                   <Ionicons name="flash-outline" size={13} color={colors.brandGreen} />
-                  <Text style={[styles.importRosterText, { color: isDark ? colors.brandGreen : colors.primary }]}>
+                  <Text style={[styles.utilityActionText, { color: isDark ? colors.brandGreen : colors.primary }]}>
                     Import / Update
                   </Text>
                 </TouchableOpacity>
@@ -524,7 +545,7 @@ function AppContent() {
                 {members.length > 0 && (
                   <TouchableOpacity
                     style={[
-                      styles.exportRosterBtn,
+                      styles.utilityActionBtn,
                       {
                         backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
                         borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
@@ -534,7 +555,7 @@ function AppContent() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="share-outline" size={13} color={colors.brandGreen} />
-                    <Text style={[styles.exportRosterText, { color: isDark ? colors.brandGreen : colors.primary }]}>
+                    <Text style={[styles.utilityActionText, { color: isDark ? colors.brandGreen : colors.primary }]}>
                       Extract / Export
                     </Text>
                   </TouchableOpacity>
@@ -556,7 +577,7 @@ function AppContent() {
                   onDelete={handleDeleteMember}
                 />
               )}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -584,7 +605,11 @@ function AppContent() {
         {/* Floating Action Button (FAB) */}
         {(activeTab === 'meetings' || activeTab === 'members') && (
           <TouchableOpacity
-            style={[styles.floatingActionButton, { backgroundColor: colors.primary }]}
+            style={[
+              styles.floatingActionButton,
+              { backgroundColor: colors.primary },
+              isNarrow && styles.floatingActionButtonMobile,
+            ]}
             onPress={() => {
               if (activeTab === 'meetings') setIsNewMeetingVisible(true);
               else if (activeTab === 'members') setIsNewMemberVisible(true);
@@ -594,12 +619,14 @@ function AppContent() {
           >
             <Ionicons
               name={activeTab === 'meetings' ? 'add' : 'person-add'}
-              size={19}
+              size={isNarrow ? 22 : 19}
               color={isDark ? '#070707' : '#FFFFFF'}
             />
-            <Text style={[styles.fabText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
-              {activeTab === 'meetings' ? 'New Meeting' : 'Add Member'}
-            </Text>
+            {!isNarrow && (
+              <Text style={[styles.fabText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
+                {activeTab === 'meetings' ? 'New Meeting' : 'Add Member'}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -712,60 +739,56 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
   },
-  domainRowHeader: {
+  domainSection: {
+    marginBottom: 8,
+  },
+  domainChipsScroll: {
+    paddingHorizontal: 14,
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  domainChip: {
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  domainChipText: {
+    fontSize: 11.5,
+  },
+  utilityBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 14,
-    marginBottom: 10,
-    flexWrap: 'wrap',
+    marginBottom: 8,
     gap: 8,
   },
-  domainFiltersScroll: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 5,
+  countBadge: {
     flex: 1,
+  },
+  countBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '600',
   },
   actionButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  importRosterBtn: {
+  utilityActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 7,
-    borderWidth: 1,
-  },
-  importRosterText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  exportRosterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 7,
-    borderWidth: 1,
-  },
-  exportRosterText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  domainChip: {
-    paddingHorizontal: 10,
+    gap: 4,
+    paddingHorizontal: 8,
     paddingVertical: 4.5,
-    borderRadius: 16,
+    borderRadius: 6,
     borderWidth: 1,
   },
-  domainChipText: {
-    fontSize: 11.5,
+  utilityActionText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   emptyState: {
     alignItems: 'center',
@@ -799,6 +822,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     zIndex: 999,
+  },
+  floatingActionButtonMobile: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    paddingHorizontal: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 22,
+    right: 18,
   },
   fabText: {
     color: '#FFFFFF',

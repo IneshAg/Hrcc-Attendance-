@@ -25,6 +25,18 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
       .toUpperCase();
   };
 
+  const formatLinkedInHandle = (url: string) => {
+    if (!url) return '';
+    const clean = url.trim().split('?')[0].replace(/\/$/, '');
+    return clean.replace(/^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\//i, '@');
+  };
+
+  const formatGitHubHandle = (url: string) => {
+    if (!url) return '';
+    const clean = url.trim().split('?')[0].replace(/\/$/, '');
+    return clean.replace(/^https?:\/\/(www\.)?github\.com\//i, '@');
+  };
+
   const roleConfig = getRoleBadgeConfig(member.role, member.domain);
   const attendanceRate = stats ? stats.attendanceRate : 0;
   const totalMeetings = stats ? stats.totalMeetings : 0;
@@ -266,8 +278,11 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
             ]}
           >
             <Ionicons name="logo-linkedin" size={12} color="#0A66C2" />
-            <Text style={[styles.contactText, { color: '#0A66C2', fontWeight: '600' }]}>
-              {member.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//i, '@')}
+            <Text
+              style={[styles.contactText, { color: '#0A66C2', fontWeight: '600', maxWidth: 180 }]}
+              numberOfLines={1}
+            >
+              {formatLinkedInHandle(member.linkedin)}
             </Text>
           </View>
         ) : null}
@@ -283,8 +298,11 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
             ]}
           >
             <Ionicons name="logo-github" size={12} color={colors.text} />
-            <Text style={[styles.contactText, { color: colors.text, fontWeight: '600' }]}>
-              {member.github.replace(/^https?:\/\/(www\.)?github\.com\//i, '@')}
+            <Text
+              style={[styles.contactText, { color: colors.text, fontWeight: '600', maxWidth: 180 }]}
+              numberOfLines={1}
+            >
+              {formatGitHubHandle(member.github)}
             </Text>
           </View>
         ) : null}
@@ -454,13 +472,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingVertical: 3.5,
     borderRadius: 6,
     borderWidth: 1,
     maxWidth: '100%',
+    flexShrink: 1,
   },
   contactText: {
     fontSize: 11,
+    flexShrink: 1,
   },
   statsContainer: {
     marginTop: 10,

@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { isDark, colors, toggleTheme } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const isNarrow = windowWidth < 520;
+  const isNarrow = windowWidth < 580;
 
   return (
     <View
@@ -155,15 +155,15 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </TouchableOpacity>
 
-        {/* Quick Actions (Add Meeting / Add Member) */}
-        {activeTab === 'meetings' && onNewMeeting && (
+        {/* Quick Actions (Add Meeting / Add Member) - Only displayed on desktop/tablets (>=580px) to prevent title truncation on mobile */}
+        {!isNarrow && activeTab === 'meetings' && onNewMeeting && (
           <TouchableOpacity
             style={[
               styles.primaryActionButton,
               {
                 backgroundColor: colors.primary,
-                paddingHorizontal: isNarrow ? 10 : 13,
-                height: isNarrow ? 32 : 36,
+                paddingHorizontal: 13,
+                height: 36,
               },
             ]}
             onPress={onNewMeeting}
@@ -176,19 +176,19 @@ export const Header: React.FC<HeaderProps> = ({
                 { color: isDark ? '#070707' : '#FFFFFF' },
               ]}
             >
-              {isNarrow ? 'Meeting' : '+ New Meeting'}
+              + New Meeting
             </Text>
           </TouchableOpacity>
         )}
 
-        {activeTab === 'members' && onNewMember && (
+        {!isNarrow && activeTab === 'members' && onNewMember && (
           <TouchableOpacity
             style={[
               styles.primaryActionButton,
               {
                 backgroundColor: colors.primary,
-                paddingHorizontal: isNarrow ? 10 : 13,
-                height: isNarrow ? 32 : 36,
+                paddingHorizontal: 13,
+                height: 36,
               },
             ]}
             onPress={onNewMember}
@@ -201,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
                 { color: isDark ? '#070707' : '#FFFFFF' },
               ]}
             >
-              {isNarrow ? 'Member' : '+ Add Member'}
+              + Add Member
             </Text>
           </TouchableOpacity>
         )}
