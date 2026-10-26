@@ -30,6 +30,7 @@ import {
   Meeting,
   AttendanceRecord,
 } from './src/types';
+import { sortMembersByHierarchy } from './src/utils/roleUtils';
 import {
   initializeStorage,
   getMembers,
@@ -227,10 +228,18 @@ export default function App() {
   };
 
   // Filtered members for Members Directory tab
-  const domainFilters = ['All', 'Technical', 'Creatives', 'Corporate', 'Executive (No Domain)'];
+  const domainFilters = [
+    'All',
+    'Executives',
+    'Heads',
+    'Leads',
+    'Technical',
+    'Creatives',
+    'Corporate',
+  ];
 
   const filteredMembersList = useMemo(() => {
-    return members.filter((m) => {
+    const list = members.filter((m) => {
       const q = memberSearchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
@@ -250,11 +259,25 @@ export default function App() {
 
       if (!matchesSearch) return false;
       if (selectedDomain === 'All') return true;
-      if (selectedDomain === 'Executive (No Domain)') {
-        return m.domain === 'None' || !m.domain;
+      if (selectedDomain === 'Executives') {
+        const lower = (m.role || '').toLowerCase();
+        return (
+          lower.includes('president') ||
+          lower.includes('secretary') ||
+          m.domain === 'None' ||
+          !m.domain
+        );
+      }
+      if (selectedDomain === 'Heads') {
+        return (m.role || '').toLowerCase().includes('head');
+      }
+      if (selectedDomain === 'Leads') {
+        return (m.role || '').toLowerCase().includes('lead');
       }
       return m.domain === selectedDomain;
     });
+
+    return sortMembersByHierarchy(list);
   }, [members, memberSearchQuery, selectedDomain]);
 
   if (isLoading) {

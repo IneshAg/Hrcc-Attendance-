@@ -20,6 +20,7 @@ interface NewMemberModalProps {
 
 const DOMAIN_OPTIONS = ['Technical', 'Creatives', 'Corporate', 'None'];
 const ROLE_SUGGESTIONS = [
+  'President',
   'Vice President',
   'Secretary',
   'Joint Secretary',
@@ -328,6 +329,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
                     onPress={() => {
                       setRole(r);
                       if (
+                        r === 'President' ||
                         r === 'Vice President' ||
                         r === 'Secretary' ||
                         r === 'Joint Secretary'

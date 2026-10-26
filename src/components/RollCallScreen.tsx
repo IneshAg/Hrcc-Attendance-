@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember, Meeting, AttendanceRecord, AttendanceStatus } from '../types';
 import { calculateMeetingSummary, saveMeetingAttendance } from '../storage/storage';
+import { getRoleBadgeConfig, sortMembersByHierarchy } from '../utils/roleUtils';
 
 interface RollCallScreenProps {
   meeting: Meeting;
@@ -126,9 +127,9 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
     return calculateMeetingSummary(attendance, members.length);
   }, [attendance, members.length]);
 
-  // Filtered members list
+  // Filtered and hierarchy-sorted members list
   const filteredMembers = useMemo(() => {
-    return members.filter((member) => {
+    const list = members.filter((member) => {
       // Search match
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -153,6 +154,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
       if (selectedFilter === 'unmarked') return !status;
       return status === selectedFilter;
     });
+
+    return sortMembersByHierarchy(list);
   }, [members, searchQuery, selectedFilter, attendance.statuses]);
 
   // Get initials for avatar
@@ -168,6 +171,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   const renderMemberRow = ({ item }: { item: ClubMember }) => {
     const status = attendance.statuses[item.id];
     const hasNote = Boolean(attendance.notes?.[item.id]);
+    const roleConfig = getRoleBadgeConfig(item.role, item.domain);
 
     return (
       <View style={styles.memberCard}>
@@ -179,9 +183,11 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           <View style={styles.memberInfo}>
             <View style={styles.memberNameRow}>
               <Text style={styles.memberName}>{item.name}</Text>
-              <View style={styles.raBadge}>
-                <Text style={styles.raText}>{item.raNo}</Text>
-              </View>
+              {item.raNo ? (
+                <View style={styles.raBadge}>
+                  <Text style={styles.raText}>{item.raNo}</Text>
+                </View>
+              ) : null}
               {hasNote && (
                 <TouchableOpacity onPress={() => openNoteModal(item)}>
                   <Ionicons name="chatbubble-ellipses" size={15} color="#6366F1" />
@@ -190,15 +196,30 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             </View>
 
             <View style={styles.memberMetaRow}>
+              {/* Role Badge with Icon */}
+              <View
+                style={[
+                  styles.roleBadgeMini,
+                  { backgroundColor: roleConfig.badgeBg, borderColor: roleConfig.badgeBorder },
+                ]}
+              >
+                <Ionicons
+                  name={roleConfig.icon as any}
+                  size={11}
+                  color={roleConfig.textColor}
+                  style={{ marginRight: 3 }}
+                />
+                <Text style={[styles.roleBadgeMiniText, { color: roleConfig.textColor }]}>
+                  {roleConfig.label}
+                </Text>
+              </View>
+
               {item.domain && item.domain !== 'None' ? (
                 <View style={styles.domainTag}>
                   <Text style={styles.domainTagText}>{item.domain}</Text>
                 </View>
-              ) : (
-                <View style={[styles.domainTag, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]}>
-                  <Text style={[styles.domainTagText, { color: '#4F46E5' }]}>{item.role}</Text>
-                </View>
-              )}
+              ) : null}
+
               <Text style={styles.collegeDetailText}>
                 {item.branch || item.department} {item.section ? `• Sec ${item.section}` : ''}
               </Text>
@@ -805,6 +826,18 @@ const styles = StyleSheet.create({
     gap: 6,
     flexWrap: 'wrap',
     marginTop: 3,
+  },
+  roleBadgeMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  roleBadgeMiniText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   domainTag: {
     backgroundColor: '#EEF2FF',

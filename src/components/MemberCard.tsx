@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
 import { MemberOverallStats } from '../storage/storage';
+import { getRoleBadgeConfig } from '../utils/roleUtils';
 
 interface MemberCardProps {
   member: ClubMember;
@@ -19,6 +20,8 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onDelete 
       .join('')
       .toUpperCase();
   };
+
+  const roleConfig = getRoleBadgeConfig(member.role, member.domain);
 
   const attendanceRate = stats ? stats.attendanceRate : 0;
   const totalMeetings = stats ? stats.totalMeetings : 0;
@@ -41,41 +44,42 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onDelete 
         <View style={styles.headerInfo}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{member.name}</Text>
-            <View style={styles.raBadge}>
-              <Text style={styles.raText}>{member.raNo}</Text>
-            </View>
+            {member.raNo ? (
+              <View style={styles.raBadge}>
+                <Text style={styles.raText}>{member.raNo}</Text>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.domainRow}>
+            {/* 1. Official Role Badge with Icon */}
+            <View
+              style={[
+                styles.roleBadge,
+                { backgroundColor: roleConfig.badgeBg, borderColor: roleConfig.badgeBorder },
+              ]}
+            >
+              <Ionicons
+                name={roleConfig.icon as any}
+                size={13}
+                color={roleConfig.textColor}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.roleBadgeText, { color: roleConfig.textColor }]}>
+                {roleConfig.label}
+              </Text>
+            </View>
+
+            {/* 2. Domain Tag (if not Executive / None) */}
             {member.domain && member.domain !== 'None' ? (
               <View style={styles.domainTag}>
                 <Text style={styles.domainText}>{member.domain} Domain</Text>
               </View>
-            ) : null}
-            {member.role ? (
-              <View
-                style={[
-                  styles.domainTag,
-                  (member.domain === 'None' || !member.domain) && {
-                    backgroundColor: '#EEF2FF',
-                    borderColor: '#C7D2FE',
-                    borderWidth: 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.domainText,
-                    (member.domain === 'None' || !member.domain) && {
-                      color: '#4F46E5',
-                      fontWeight: '700',
-                    },
-                  ]}
-                >
-                  {member.role}
-                </Text>
+            ) : (
+              <View style={[styles.domainTag, styles.domainTagExecutive]}>
+                <Text style={styles.domainTextExecutive}>Core Executive</Text>
               </View>
-            ) : null}
+            )}
           </View>
         </View>
 
@@ -258,19 +262,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 4,
+    marginTop: 5,
     flexWrap: 'wrap',
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.1,
   },
   domainTag: {
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  domainTagExecutive: {
+    backgroundColor: '#FAF5FF',
+    borderColor: '#E9D5FF',
   },
   domainText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#334155',
+    color: '#475569',
+  },
+  domainTextExecutive: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#7E22CE',
   },
   deleteBtn: {
     padding: 6,
