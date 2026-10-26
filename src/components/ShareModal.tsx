@@ -155,8 +155,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
               <View style={styles.summaryBar}>
                 <Text style={styles.summaryBarText}>
-                  Total: {summary.total} | 🟢 Present: {summary.present} | 🔴 Absent:{' '}
-                  {summary.absent} | 🟡 Late: {summary.late}
+                  Total: {summary.total} | 🟢 P: {summary.present} | 🔴 A: {summary.absent} | 🟡 L: {summary.late} | 🟣 OD: {summary.excused}
                 </Text>
                 <Text style={styles.summaryTurnout}>{summary.percentage}% Turnout</Text>
               </View>
@@ -227,6 +226,31 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                         <Text style={styles.listMemberRa}>[{m.raNo}]</Text>
                         <View style={[styles.domainTagPill, m.domain === 'None' && { backgroundColor: '#EEF2FF' }]}>
                           <Text style={[styles.domainTagPillText, m.domain === 'None' && { color: '#4F46E5' }]}>
+                            {m.domain === 'None' || !m.domain ? m.role : m.domain}
+                          </Text>
+                        </View>
+                      </View>
+                      {notes[m.id] && (
+                        <Text style={styles.listMemberNote}>Note: {notes[m.id]}</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Excused / OD Members Callout */}
+              {excusedList.length > 0 && (
+                <View style={styles.sectionCallout}>
+                  <Text style={[styles.sectionHeaderAmber, { color: '#7C3AED' }]}>
+                    🟣 Excused / On-Duty ({excusedList.length})
+                  </Text>
+                  {excusedList.map((m) => (
+                    <View key={m.id} style={styles.memberListItem}>
+                      <View style={styles.memberListMain}>
+                        <Text style={styles.listMemberName}>{m.name}</Text>
+                        <Text style={styles.listMemberRa}>[{m.raNo}]</Text>
+                        <View style={[styles.domainTagPill, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+                          <Text style={[styles.domainTagPillText, { color: '#7C3AED' }]}>
                             {m.domain === 'None' || !m.domain ? m.role : m.domain}
                           </Text>
                         </View>

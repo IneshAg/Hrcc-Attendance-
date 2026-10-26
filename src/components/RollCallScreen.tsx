@@ -216,7 +216,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           </View>
         </View>
 
-        {/* Right: 4-way Status Selector */}
+        {/* Right: Modern 4-way Status Selector */}
         <View style={styles.statusButtonsContainer}>
           {/* Present (P) */}
           <TouchableOpacity
@@ -226,12 +226,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               status === 'present' && styles.presentBtnActive,
             ]}
             onPress={() => handleSetStatus(item.id, 'present')}
-            activeOpacity={0.7}
+            activeOpacity={0.65}
             accessibilityLabel={`Mark ${item.name} Present`}
           >
-            {status === 'present' && (
-              <Ionicons name="checkmark" size={12} color="#FFFFFF" style={{ marginRight: 2 }} />
-            )}
+            <Ionicons
+              name={status === 'present' ? 'checkmark-circle' : 'checkmark'}
+              size={13}
+              color={status === 'present' ? '#FFFFFF' : '#059669'}
+              style={{ marginRight: 2 }}
+            />
             <Text
               style={[
                 styles.statusBtnText,
@@ -251,12 +254,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               status === 'absent' && styles.absentBtnActive,
             ]}
             onPress={() => handleSetStatus(item.id, 'absent')}
-            activeOpacity={0.7}
+            activeOpacity={0.65}
             accessibilityLabel={`Mark ${item.name} Absent`}
           >
-            {status === 'absent' && (
-              <Ionicons name="close" size={12} color="#FFFFFF" style={{ marginRight: 2 }} />
-            )}
+            <Ionicons
+              name={status === 'absent' ? 'close-circle' : 'close'}
+              size={13}
+              color={status === 'absent' ? '#FFFFFF' : '#DC2626'}
+              style={{ marginRight: 2 }}
+            />
             <Text
               style={[
                 styles.statusBtnText,
@@ -276,9 +282,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               status === 'late' && styles.lateBtnActive,
             ]}
             onPress={() => handleSetStatus(item.id, 'late')}
-            activeOpacity={0.7}
+            activeOpacity={0.65}
             accessibilityLabel={`Mark ${item.name} Late`}
           >
+            <Ionicons
+              name={status === 'late' ? 'time' : 'time-outline'}
+              size={13}
+              color={status === 'late' ? '#FFFFFF' : '#D97706'}
+              style={{ marginRight: 2 }}
+            />
             <Text
               style={[
                 styles.statusBtnText,
@@ -290,7 +302,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             </Text>
           </TouchableOpacity>
 
-          {/* Excused (E) */}
+          {/* Excused / On-Duty (OD) */}
           <TouchableOpacity
             style={[
               styles.statusBtn,
@@ -298,9 +310,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               status === 'excused' && styles.excusedBtnActive,
             ]}
             onPress={() => handleSetStatus(item.id, 'excused')}
-            activeOpacity={0.7}
-            accessibilityLabel={`Mark ${item.name} Excused`}
+            activeOpacity={0.65}
+            accessibilityLabel={`Mark ${item.name} Excused / On-Duty`}
           >
+            <Ionicons
+              name={status === 'excused' ? 'shield-checkmark' : 'shield-outline'}
+              size={12}
+              color={status === 'excused' ? '#FFFFFF' : '#7C3AED'}
+              style={{ marginRight: 2 }}
+            />
             <Text
               style={[
                 styles.statusBtnText,
@@ -308,7 +326,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 status === 'excused' && styles.statusBtnTextActive,
               ]}
             >
-              E
+              OD
             </Text>
           </TouchableOpacity>
 
@@ -387,6 +405,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             <View style={styles.metricDivider} />
 
             <View style={styles.metricItem}>
+              <Text style={[styles.metricValue, { color: '#7C3AED' }]}>{summary.excused}</Text>
+              <Text style={[styles.metricLabel, { color: '#7C3AED' }]}>OD / Excused</Text>
+            </View>
+            <View style={styles.metricDivider} />
+
+            <View style={styles.metricItem}>
               <Text style={[styles.metricValue, { color: '#4F46E5' }]}>{summary.percentage}%</Text>
               <Text style={[styles.metricLabel, { color: '#4F46E5' }]}>Turnout</Text>
             </View>
@@ -403,6 +427,34 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 },
               ]}
             />
+          </View>
+        </View>
+
+        {/* Status Guide / Legend Banner */}
+        <View style={styles.legendBanner}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendPill, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
+              <Ionicons name="checkmark-circle" size={12} color="#059669" />
+              <Text style={[styles.legendPillText, { color: '#047857' }]}>P = Present</Text>
+            </View>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendPill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+              <Ionicons name="close-circle" size={12} color="#DC2626" />
+              <Text style={[styles.legendPillText, { color: '#B91C1C' }]}>A = Absent</Text>
+            </View>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendPill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+              <Ionicons name="time" size={12} color="#D97706" />
+              <Text style={[styles.legendPillText, { color: '#B45309' }]}>L = Late</Text>
+            </View>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendPill, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+              <Ionicons name="shield-checkmark" size={12} color="#7C3AED" />
+              <Text style={[styles.legendPillText, { color: '#6D28D9' }]}>OD = Excused (On-Duty)</Text>
+            </View>
           </View>
         </View>
 
@@ -498,6 +550,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Text style={[styles.filterPillText, selectedFilter === 'late' && styles.filterPillTextActive]}>
               Late ({summary.late})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterPill, selectedFilter === 'excused' && styles.filterPillActive]}
+            onPress={() => setSelectedFilter('excused')}
+          >
+            <Text style={[styles.filterPillText, selectedFilter === 'excused' && styles.filterPillTextActive]}>
+              OD ({summary.excused})
             </Text>
           </TouchableOpacity>
         </View>
@@ -885,19 +946,20 @@ const styles = StyleSheet.create({
   statusButtonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   statusBtn: {
-    width: 36,
-    height: 36,
+    minWidth: 38,
+    height: 38,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     borderWidth: 1.5,
+    paddingHorizontal: 6,
   },
   statusBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   statusBtnTextActive: {
@@ -905,62 +967,117 @@ const styles = StyleSheet.create({
   },
   // Present Button
   presentBtn: {
-    borderColor: '#10B981',
-    backgroundColor: '#F0FDF4',
+    borderColor: '#A7F3D0',
+    backgroundColor: '#ECFDF5',
   },
   presentBtnActive: {
     backgroundColor: '#10B981',
     borderColor: '#059669',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 3,
   },
   presentBtnText: {
-    color: '#059669',
+    color: '#047857',
   },
   // Absent Button
   absentBtn: {
-    borderColor: '#EF4444',
+    borderColor: '#FECACA',
     backgroundColor: '#FEF2F2',
   },
   absentBtnActive: {
     backgroundColor: '#EF4444',
     borderColor: '#DC2626',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 3,
   },
   absentBtnText: {
-    color: '#DC2626',
+    color: '#B91C1C',
   },
   // Late Button
   lateBtn: {
-    borderColor: '#F59E0B',
+    borderColor: '#FDE68A',
     backgroundColor: '#FFFBEB',
   },
   lateBtnActive: {
     backgroundColor: '#F59E0B',
     borderColor: '#D97706',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   lateBtnText: {
-    color: '#D97706',
+    color: '#B45309',
   },
-  // Excused Button
+  // Excused / On-Duty (OD) Button
   excusedBtn: {
-    borderColor: '#94A3B8',
-    backgroundColor: '#F8FAFC',
+    minWidth: 44,
+    borderColor: '#DDD6FE',
+    backgroundColor: '#F5F3FF',
   },
   excusedBtnActive: {
-    backgroundColor: '#64748B',
-    borderColor: '#475569',
+    backgroundColor: '#8B5CF6',
+    borderColor: '#7C3AED',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 3,
   },
   excusedBtnText: {
-    color: '#64748B',
+    color: '#6D28D9',
   },
   noteIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
+    width: 34,
+    height: 38,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   noteIconBtnActive: {
     backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+  },
+  legendBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  legendPillText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',
