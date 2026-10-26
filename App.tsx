@@ -12,6 +12,7 @@ import {
   Platform,
   AppState,
   AppStateStatus,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -328,8 +329,13 @@ function AppContent() {
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Image
+          source={require('./assets/hrcc-logo.png')}
+          style={{ width: 68, height: 68, marginBottom: 18 }}
+          resizeMode="contain"
+        />
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+        <Text style={[styles.loadingText, { color: colors.textSecondary, marginTop: 14 }]}>
           Loading HRCC Attendance...
         </Text>
       </View>

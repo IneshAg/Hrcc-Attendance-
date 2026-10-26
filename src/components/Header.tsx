@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -44,18 +45,27 @@ export const Header: React.FC<HeaderProps> = ({
       ]}
     >
       <View style={styles.brandRow}>
-        {/* HackerRank Icon Mark */}
+        {/* Official HRCC Logo */}
         <View
           style={[
             styles.logoBadge,
             {
-              backgroundColor: isDark ? '#05C770' : '#049D57',
-              width: isNarrow ? 32 : 36,
-              height: isNarrow ? 32 : 36,
+              backgroundColor: isDark ? '#111613' : '#F1F5F9',
+              borderColor: isDark ? '#1F2E24' : '#E2E8F0',
+              borderWidth: 1,
+              width: isNarrow ? 34 : 38,
+              height: isNarrow ? 34 : 38,
             },
           ]}
         >
-          <Text style={[styles.logoBadgeText, isNarrow && { fontSize: 17 }]}>H</Text>
+          <Image
+            source={require('../../assets/hrcc-logo.png')}
+            style={{
+              width: isNarrow ? 22 : 25,
+              height: isNarrow ? 22 : 25,
+            }}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.titleContainer}>
