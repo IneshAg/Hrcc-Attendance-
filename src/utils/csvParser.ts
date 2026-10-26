@@ -297,10 +297,10 @@ export const parseBulkMembersText = (
       });
     } else {
       // Format without header:
-      // Case 1: Simple list of names with optional role/domain (e.g. "Purva Jain - Vice President" or "Inesh Agarwal, Tech Head")
+      // Case 1: Simple list of names with optional role/domain (e.g. "Student Name - Lead" or "Member Name, Technical")
       const firstCol = parts[0] || '';
       if (parts.length === 1) {
-        // e.g. "Purva Jain - Vice President" or "* Purva Jain"
+        // e.g. "Student Name - Lead" or "* Student Name"
         const cleanLine = firstCol.replace(/^[*•\-]\s*/, '').trim();
         if (cleanLine.includes(' - ')) {
           const [n, r] = cleanLine.split(' - ');

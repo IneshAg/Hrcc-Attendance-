@@ -169,7 +169,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                   },
                 ]}
                 multiline
-                placeholder={`Examples:\n1. Structured Text Blocks (Auto-Updates Existing):\nName: Purva Jain\nReg.No: RA2411003010099\nSRM email: pj1234@srmist.edu.in\nPursuing Branch: B.Tech CSE\n\n2. Simple Names:\nPurva Jain - Vice President\nInesh Agarwal - Tech Head\n\n3. Or CSV / Excel Rows:\nName, Reg.No, SRM Email, Branch, Department, Domain, Role`}
+                placeholder={`Examples:\n1. Structured Text Blocks (Auto-Updates Existing):\nName: Student Name\nReg.No: RA2511003010001\nSRM email: student@srmist.edu.in\nPursuing Branch: B.Tech CSE\nFA Name: Dr. Faculty Advisor\nPhone: +91 98000 00000\n\n2. Simple Names:\nStudent Name - Lead\nAnother Member - Member\n\n3. Or CSV / Excel Rows:\nName, Reg.No, SRM Email, Branch, Department, Domain, Role`}
                 value={inputText}
                 onChangeText={setInputText}
                 placeholderTextColor={colors.textMuted}

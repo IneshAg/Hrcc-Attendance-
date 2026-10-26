@@ -377,7 +377,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                     color: colors.text,
                   },
                 ]}
-                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE Core\nYear: 3rd Year\nSection: C2\nFA Name: Dr. Vinod D\nFA Email: vinodd@srmist.edu.in\nPhone: +91 98765 43210\nDomain: Technical\nRole: Lead`}
+                placeholder={`Name: Student Name\nReg.No: RA2511003010001\nPursuing Branch: CSE Core\nYear: 2nd Year\nSection: A1\nFA Name: Dr. Faculty Advisor\nFA Email: advisor@srmist.edu.in\nPhone: +91 98000 00000\nDomain: Technical\nRole: Member`}
                 placeholderTextColor={colors.textMuted}
                 value={pasteText}
                 onChangeText={setPasteText}
@@ -427,7 +427,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="e.g. Purva Jain"
+                    placeholder="e.g. Student Name"
                     value={name}
                     onChangeText={setName}
                     placeholderTextColor={colors.textMuted}
@@ -456,7 +456,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="e.g. RA2411003010123"
+                    placeholder="e.g. RA2511003010001"
                     value={raNo}
                     onChangeText={handleRaNoChange}
                     autoCapitalize="characters"
@@ -569,7 +569,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="pj1234@srmist.edu.in"
+                    placeholder="student@srmist.edu.in"
                     value={srmEmail}
                     onChangeText={setSrmEmail}
                     keyboardType="email-address"
@@ -592,7 +592,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="purva@gmail.com"
+                    placeholder="student@example.com"
                     value={personalEmail}
                     onChangeText={setPersonalEmail}
                     keyboardType="email-address"
@@ -665,7 +665,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="e.g. Dr. Vinod D"
+                    placeholder="e.g. Dr. Faculty Advisor"
                     value={faName}
                     onChangeText={setFaName}
                     placeholderTextColor={colors.textMuted}
@@ -686,7 +686,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 >
                   <TextInput
                     style={[styles.input, { color: colors.text }]}
-                    placeholder="vinodd@srmist.edu.in"
+                    placeholder="fa.email@srmist.edu.in"
                     value={faEmail}
                     onChangeText={setFaEmail}
                     keyboardType="email-address"
@@ -711,7 +711,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               >
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 98000 00000"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
