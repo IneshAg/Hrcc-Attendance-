@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "club-attendance-app",
-    "slug": "club-attendance-app",
+    "name": "HackerRank Campus Crew Attendance",
+    "slug": "hrcc-attendance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
