@@ -22,6 +22,7 @@ import { NewMeetingModal } from './src/components/NewMeetingModal';
 import { NewMemberModal } from './src/components/NewMemberModal';
 import { BulkImportModal } from './src/components/BulkImportModal';
 import { ShareModal } from './src/components/ShareModal';
+import { ExportMembersModal } from './src/components/ExportMembersModal';
 import { AnalyticsView } from './src/components/AnalyticsView';
 import { supabase } from './src/services/supabase';
 
@@ -63,6 +64,7 @@ export default function App() {
   const [isNewMemberVisible, setIsNewMemberVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<ClubMember | null>(null);
   const [isBulkImportVisible, setIsBulkImportVisible] = useState(false);
+  const [isExportMembersVisible, setIsExportMembersVisible] = useState(false);
   const [shareModalData, setShareModalData] = useState<{
     meeting: Meeting;
     record: AttendanceRecord | null;
@@ -443,11 +445,11 @@ export default function App() {
                 {members.length > 0 && (
                   <TouchableOpacity
                     style={styles.exportRosterBtn}
-                    onPress={handleExportMembersCSV}
+                    onPress={() => setIsExportMembersVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="download-outline" size={14} color="#059669" />
-                    <Text style={styles.exportRosterText}>Export CSV</Text>
+                    <Ionicons name="share-outline" size={14} color="#059669" />
+                    <Text style={styles.exportRosterText}>Extract / Export</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -544,6 +546,12 @@ export default function App() {
         attendance={shareModalData?.record || null}
         members={members}
         onClose={() => setShareModalData(null)}
+      />
+
+      <ExportMembersModal
+        visible={isExportMembersVisible}
+        members={members}
+        onClose={() => setIsExportMembersVisible(false)}
       />
     </SafeAreaView>
   );

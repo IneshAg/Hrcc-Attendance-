@@ -288,11 +288,11 @@ export const generateMembersListCSV = (members: ClubMember[]): string => {
     const row = [
       String(idx + 1),
       m.name,
-      m.raNo,
+      m.raNo || '',
       domainDisplay,
       m.role || 'Member',
-      m.branch || m.department,
-      m.department,
+      m.branch || m.department || '',
+      m.department || '',
       m.year || '',
       m.section || '',
       m.srmEmail || '',
@@ -308,4 +308,152 @@ export const generateMembersListCSV = (members: ClubMember[]): string => {
   });
 
   return rows.join('\r\n');
+};
+
+/**
+ * Generate formatted WhatsApp-ready text for Club Members Roster
+ */
+export const generateMembersWhatsAppText = (members: ClubMember[]): string => {
+  let text = `*HACKERRANK CAMPUS CREW (HRCC) - MEMBERS ROSTER*\n`;
+  text += `👥 Total Members: ${members.length}\n`;
+  text += `📅 Date: ${new Date().toLocaleDateString()}\n\n`;
+
+  const executives = members.filter((m) => {
+    const r = (m.role || '').toLowerCase();
+    return (
+      r.includes('president') ||
+      r.includes('secretary') ||
+      m.domain === 'None' ||
+      !m.domain
+    );
+  });
+
+  const heads = members.filter(
+    (m) =>
+      (m.role || '').toLowerCase().includes('head') && !executives.includes(m)
+  );
+
+  const leads = members.filter(
+    (m) =>
+      (m.role || '').toLowerCase().includes('lead') && !executives.includes(m)
+  );
+
+  const generalMembers = members.filter(
+    (m) =>
+      !executives.includes(m) && !heads.includes(m) && !leads.includes(m)
+  );
+
+  if (executives.length > 0) {
+    text += `*👑 Executive Leadership (${executives.length}):*\n`;
+    executives.forEach((m, idx) => {
+      const reg = m.raNo ? ` [${m.raNo}]` : '';
+      text += `${idx + 1}. *${m.name}* - ${m.role}${reg}\n`;
+      if (m.branch || m.department) {
+        text += `   _${m.branch || m.department} • ${m.year || ''} (Sec ${m.section || '-'})_\n`;
+      }
+      if (m.faName) {
+        text += `   _FA: ${m.faName}_\n`;
+      }
+    });
+    text += '\n';
+  }
+
+  if (heads.length > 0) {
+    text += `*⭐ Domain Heads (${heads.length}):*\n`;
+    heads.forEach((m, idx) => {
+      const dom = m.domain && m.domain !== 'None' ? ` [${m.domain}]` : '';
+      const reg = m.raNo ? ` (${m.raNo})` : '';
+      text += `${idx + 1}. *${m.name}* - ${m.role}${dom}${reg}\n`;
+      if (m.branch || m.department) {
+        text += `   _${m.branch || m.department} • FA: ${m.faName || '-'}\n`;
+      }
+    });
+    text += '\n';
+  }
+
+  if (leads.length > 0) {
+    text += `*⚡ Domain Leads (${leads.length}):*\n`;
+    leads.forEach((m, idx) => {
+      const dom = m.domain && m.domain !== 'None' ? ` [${m.domain}]` : '';
+      const reg = m.raNo ? ` (${m.raNo})` : '';
+      text += `${idx + 1}. *${m.name}* - ${m.role}${dom}${reg}\n`;
+      if (m.branch || m.department) {
+        text += `   _${m.branch || m.department} • FA: ${m.faName || '-'}\n`;
+      }
+    });
+    text += '\n';
+  }
+
+  if (generalMembers.length > 0) {
+    text += `*👥 Crew Members (${generalMembers.length}):*\n`;
+    generalMembers.forEach((m, idx) => {
+      const dom = m.domain && m.domain !== 'None' ? ` [${m.domain}]` : '';
+      const reg = m.raNo ? ` [${m.raNo}]` : '';
+      text += `${idx + 1}. *${m.name}*${dom}${reg}\n`;
+    });
+    text += '\n';
+  }
+
+  text += `_Extracted from HRCC Attendance System on ${new Date().toLocaleDateString()}_`;
+  return text;
+};
+
+/**
+ * Generate formatted Plain Text Report (.txt) for the Club Members Directory
+ */
+export const generateMembersListText = (members: ClubMember[]): string => {
+  let text = `======================================================================\n`;
+  text += `             HACKERRANK CAMPUS CREW - MEMBERS DIRECTORY               \n`;
+  text += `======================================================================\n\n`;
+  text += `TOTAL REGISTERED MEMBERS: ${members.length}\n`;
+  text += `EXPORT DATE:             ${new Date().toLocaleString()}\n`;
+  text += `\n----------------------------------------------------------------------\n`;
+
+  members.forEach((m, idx) => {
+    const domainDesc =
+      m.domain === 'None' || !m.domain ? 'Executive (No Domain)' : `${m.domain} Domain`;
+
+    text += `${idx + 1}. ${m.name.toUpperCase()}\n`;
+    text += `   Role:          ${m.role || 'Member'}\n`;
+    text += `   Domain:        ${domainDesc}\n`;
+    text += `   Registration:  ${m.raNo || 'Not specified'}\n`;
+    text += `   College Dept:  ${m.department || m.branch || 'Not specified'}\n`;
+    text += `   Class:         ${m.year || '-'} (Section ${m.section || '-'})\n`;
+    text += `   SRM Email:     ${m.srmEmail || '-'}\n`;
+    text += `   Personal Mail: ${m.personalEmail || '-'}\n`;
+    text += `   FA Name:       ${m.faName || '-'}\n`;
+    if (m.faEmail) text += `   FA Email:      ${m.faEmail}\n`;
+    if (m.linkedin) text += `   LinkedIn:      ${m.linkedin}\n`;
+    if (m.github) text += `   GitHub:        ${m.github}\n`;
+    if (m.phone) text += `   Phone:         ${m.phone}\n`;
+    text += `----------------------------------------------------------------------\n`;
+  });
+
+  return text;
+};
+
+/**
+ * Generate Key: Value blocks format (ready for re-importing or backup)
+ */
+export const generateMembersKeyValueText = (members: ClubMember[]): string => {
+  return members
+    .map((m) => {
+      let block = `Name: ${m.name}\n`;
+      if (m.raNo) block += `Reg.No: ${m.raNo}\n`;
+      if (m.role) block += `Role: ${m.role}\n`;
+      if (m.domain && m.domain !== 'None') block += `Domain: ${m.domain}\n`;
+      if (m.branch) block += `Pursuing Branch: ${m.branch}\n`;
+      if (m.department) block += `Department: ${m.department}\n`;
+      if (m.year) block += `Year: ${m.year}\n`;
+      if (m.section) block += `Section: ${m.section}\n`;
+      if (m.srmEmail) block += `SRM email: ${m.srmEmail}\n`;
+      if (m.personalEmail) block += `Personal Email: ${m.personalEmail}\n`;
+      if (m.faName) block += `FA name: ${m.faName}\n`;
+      if (m.faEmail) block += `FA email: ${m.faEmail}\n`;
+      if (m.linkedin) block += `Linkdin: ${m.linkedin}\n`;
+      if (m.github) block += `GitHub: ${m.github}\n`;
+      if (m.phone) block += `Phone: ${m.phone}\n`;
+      return block.trim();
+    })
+    .join('\n\n');
 };
