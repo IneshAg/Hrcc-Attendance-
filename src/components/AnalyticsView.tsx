@@ -107,10 +107,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <View
             style={[
               styles.statIconBadge,
-              { backgroundColor: isDark ? '#232946' : '#EEF2FF' },
+              { backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5' },
             ]}
           >
-            <Ionicons name="people" size={20} color={colors.primary} />
+            <Ionicons name="people" size={20} color={colors.brandGreen} />
           </View>
           <Text style={[styles.statNumber, { color: colors.text }]}>{members.length}</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Registered Members</Text>
@@ -128,12 +128,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <View
             style={[
               styles.statIconBadge,
-              { backgroundColor: isDark ? '#064E3B' : '#ECFDF5' },
+              { backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5' },
             ]}
           >
-            <Ionicons name="calendar" size={20} color={colors.success} />
+            <Ionicons name="calendar" size={20} color={colors.brandGreen} />
           </View>
-          <Text style={[styles.statNumber, { color: colors.success }]}>
+          <Text style={[styles.statNumber, { color: colors.brandGreen }]}>
             {completedMeetings.length}
           </Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed Sessions</Text>
@@ -151,12 +151,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <View
             style={[
               styles.statIconBadge,
-              { backgroundColor: isDark ? '#232946' : '#EEF2FF' },
+              { backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5' },
             ]}
           >
-            <Ionicons name="trending-up" size={20} color={colors.primary} />
+            <Ionicons name="trending-up" size={20} color={colors.brandGreen} />
           </View>
-          <Text style={[styles.statNumber, { color: colors.primary }]}>{overallTurnout}%</Text>
+          <Text style={[styles.statNumber, { color: colors.brandGreen }]}>{overallTurnout}%</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Club Turnout</Text>
         </View>
       </View>
@@ -172,7 +172,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         ]}
       >
         <View style={styles.sectionHeaderRow}>
-          <Ionicons name="layers-outline" size={18} color={colors.primary} />
+          <Ionicons name="layers-outline" size={18} color={colors.brandGreen} />
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Domain Attendance Breakdown</Text>
         </View>
         <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
@@ -191,7 +191,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <View
                   style={[
                     styles.domainTrack,
-                    { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+                    { backgroundColor: isDark ? '#161E19' : '#F1F5F9' },
                   ]}
                 >
                   <View
@@ -199,7 +199,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       styles.domainFill,
                       {
                         width: `${item.attendanceRate}%`,
-                        backgroundColor: item.attendanceRate >= 80 ? '#10B981' : colors.primary,
+                        backgroundColor: item.attendanceRate >= 80 ? colors.brandGreen : colors.warning,
                       },
                     ]}
                   />
@@ -222,8 +222,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         ]}
       >
         <View style={styles.sectionHeaderRow}>
-          <Ionicons name="ribbon-outline" size={18} color={colors.success} />
-          <Text style={[styles.sectionTitle, { color: colors.success }]}>
+          <Ionicons name="ribbon-outline" size={18} color={colors.brandGreen} />
+          <Text style={[styles.sectionTitle, { color: colors.brandGreen }]}>
             High Consistency Members ({topAttendees.length})
           </Text>
         </View>
@@ -240,14 +240,18 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 style={[
                   styles.memberPill,
                   {
-                    backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
-                    borderColor: isDark ? '#253347' : '#F1F5F9',
+                    backgroundColor: isDark ? '#161E19' : '#F8FAFC',
+                    borderColor: isDark ? '#26362C' : '#F1F5F9',
                   },
                 ]}
               >
                 <View style={styles.memberLeft}>
                   <Text style={[styles.memberPillName, { color: colors.text }]}>{m.name}</Text>
-                  {m.raNo ? <Text style={styles.memberPillRa}>[{m.raNo}]</Text> : null}
+                  {m.raNo ? (
+                    <Text style={[styles.memberPillRa, { color: colors.brandGreen }]}>
+                      [{m.raNo}]
+                    </Text>
+                  ) : null}
                   <Text style={[styles.memberPillDomain, { color: colors.textMuted }]}>
                     • {m.domain && m.domain !== 'None' ? m.domain : m.role || 'Member'}
                   </Text>
@@ -256,12 +260,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   style={[
                     styles.rateTagGreen,
                     {
-                      backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
-                      borderColor: isDark ? '#047857' : '#A7F3D0',
+                      backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5',
+                      borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                     },
                   ]}
                 >
-                  <Text style={[styles.rateTagGreenText, { color: isDark ? '#34D399' : '#047857' }]}>
+                  <Text style={[styles.rateTagGreenText, { color: isDark ? colors.brandGreen : '#047857' }]}>
                     {stat ? stat.attendanceRate : 0}%
                   </Text>
                 </View>
@@ -271,14 +275,14 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </View>
       </View>
 
-      {/* Follow-up needed: Low Attendance (Simplified without FA context) */}
+      {/* Follow-up needed: Low Attendance */}
       {lowAttendees.length > 0 && (
         <View
           style={[
             styles.sectionCard,
             {
               backgroundColor: colors.surface,
-              borderColor: isDark ? '#450A0A' : '#FECACA',
+              borderColor: isDark ? 'rgba(255, 95, 86, 0.3)' : '#FECACA',
             },
           ]}
         >
@@ -301,14 +305,18 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                   style={[
                     styles.memberPill,
                     {
-                      backgroundColor: isDark ? '#201217' : '#FEF2F2',
-                      borderColor: isDark ? '#450A0A' : '#FEE2E2',
+                      backgroundColor: isDark ? 'rgba(255, 95, 86, 0.08)' : '#FEF2F2',
+                      borderColor: isDark ? 'rgba(255, 95, 86, 0.2)' : '#FEE2E2',
                     },
                   ]}
                 >
                   <View style={styles.memberLeft}>
                     <Text style={[styles.memberPillName, { color: colors.text }]}>{m.name}</Text>
-                    {m.raNo ? <Text style={styles.memberPillRa}>[{m.raNo}]</Text> : null}
+                    {m.raNo ? (
+                      <Text style={[styles.memberPillRa, { color: colors.brandGreen }]}>
+                        [{m.raNo}]
+                      </Text>
+                    ) : null}
                     <Text style={[styles.memberPillDomain, { color: colors.textMuted }]}>
                       • {m.domain && m.domain !== 'None' ? m.domain : m.role || 'Member'}
                     </Text>
@@ -322,12 +330,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     style={[
                       styles.rateTagRed,
                       {
-                        backgroundColor: isDark ? '#450A0A' : '#FEE2E2',
-                        borderColor: isDark ? '#991B1B' : '#FECACA',
+                        backgroundColor: isDark ? 'rgba(255, 95, 86, 0.15)' : '#FEE2E2',
+                        borderColor: isDark ? 'rgba(255, 95, 86, 0.3)' : '#FECACA',
                       },
                     ]}
                   >
-                    <Text style={[styles.rateTagRedText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>
+                    <Text style={[styles.rateTagRedText, { color: isDark ? colors.danger : '#B91C1C' }]}>
                       {stat ? stat.attendanceRate : 0}%
                     </Text>
                   </View>
@@ -374,7 +382,7 @@ const styles = StyleSheet.create({
   statIconBadge: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -460,7 +468,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   memberPill: {
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: 'row',
@@ -483,7 +491,6 @@ const styles = StyleSheet.create({
   memberPillRa: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6366F1',
   },
   memberPillDomain: {
     fontSize: 11,

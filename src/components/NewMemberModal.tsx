@@ -38,13 +38,13 @@ const ROLE_SUGGESTIONS = [
 ];
 const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 const AVATAR_COLORS = [
-  '#4F46E5',
-  '#7C3AED',
-  '#0284C7',
-  '#059669',
+  '#05C770',
+  '#04B264',
+  '#00C758',
+  '#1BA94C',
+  '#0A66C2',
   '#EA580C',
-  '#DB2777',
-  '#2563EB',
+  '#7C3AED',
   '#D97706',
 ];
 
@@ -666,8 +666,13 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               onPress={handleSubmit}
               activeOpacity={0.8}
             >
-              <Ionicons name="checkmark-circle" size={17} color="#FFFFFF" />
-              <Text style={styles.submitText}>
+              <Ionicons name="checkmark-circle" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+              <Text
+                style={[
+                  styles.submitText,
+                  { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
+                ]}
+              >
                 {initialMember ? 'Save Changes' : 'Save Member'}
               </Text>
             </TouchableOpacity>

@@ -176,8 +176,15 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                   onPress={handleParse}
                   disabled={!inputText.trim()}
                 >
-                  <Ionicons name="eye-outline" size={17} color="#FFFFFF" />
-                  <Text style={styles.primaryBtnText}>Parse & Preview</Text>
+                  <Ionicons name="eye-outline" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+                  <Text
+                    style={[
+                      styles.primaryBtnText,
+                      { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
+                    ]}
+                  >
+                    Parse & Preview
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -315,8 +322,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Ionicons name="cloud-upload" size={17} color="#FFFFFF" />
-                      <Text style={styles.primaryBtnText}>
+                      <Ionicons name="cloud-upload" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+                      <Text
+                        style={[
+                          styles.primaryBtnText,
+                          { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
+                        ]}
+                      >
                         Confirm & Import ({parsedRows.length})
                       </Text>
                     </>

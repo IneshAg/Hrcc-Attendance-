@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -63,7 +63,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               style={[
                 styles.tabButton,
                 isActive && {
-                  backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                  backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
                 },
               ]}
               onPress={() => onTabChange(tab.key)}
@@ -73,8 +73,8 @@ export const TabBar: React.FC<TabBarProps> = ({
                 <View style={styles.iconContainer}>
                   <Ionicons
                     name={isActive ? tab.iconActive : tab.iconInactive}
-                    size={19}
-                    color={isActive ? colors.primary : colors.textMuted}
+                    size={18}
+                    color={isActive ? colors.brandGreen : colors.textMuted}
                   />
                   {tab.badge !== null && (
                     <View
@@ -82,9 +82,9 @@ export const TabBar: React.FC<TabBarProps> = ({
                         styles.badge,
                         {
                           backgroundColor: isActive
-                            ? colors.primary
+                            ? colors.brandGreen
                             : isDark
-                            ? '#334155'
+                            ? '#1F2E24'
                             : '#E2E8F0',
                         },
                       ]}
@@ -94,9 +94,11 @@ export const TabBar: React.FC<TabBarProps> = ({
                           styles.badgeText,
                           {
                             color: isActive
-                              ? '#FFFFFF'
+                              ? isDark
+                                ? '#070707'
+                                : '#FFFFFF'
                               : isDark
-                              ? '#CBD5E1'
+                              ? '#99A1AF'
                               : '#475569',
                           },
                         ]}
@@ -110,7 +112,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 <Text
                   style={[
                     styles.tabLabel,
-                    { color: isActive ? colors.primary : colors.textMuted },
+                    { color: isActive ? (isDark ? colors.brandGreen : colors.primary) : colors.textMuted },
                     isActive && styles.activeTabLabel,
                   ]}
                   numberOfLines={1}
@@ -123,7 +125,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 <View
                   style={[
                     styles.activeIndicator,
-                    { backgroundColor: colors.primary },
+                    { backgroundColor: colors.brandGreen },
                   ]}
                 />
               )}
@@ -184,7 +186,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   activeIndicator: {
     position: 'absolute',

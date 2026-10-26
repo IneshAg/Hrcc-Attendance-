@@ -12,8 +12,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'HackerRank Campus Crew',
-  subtitle = 'Club Attendance System',
+  subtitle = 'SRM Student Chapter • Attendance System',
   onNewMeeting,
   onNewMember,
   activeTab,
@@ -31,30 +30,33 @@ export const Header: React.FC<HeaderProps> = ({
       ]}
     >
       <View style={styles.brandRow}>
-        <View style={[styles.logoBadge, { backgroundColor: colors.primary }]}>
-          <Ionicons name="checkbox-outline" size={22} color="#FFFFFF" />
+        {/* HackerRank Icon Mark */}
+        <View style={[styles.logoBadge, { backgroundColor: isDark ? '#05C770' : '#049D57' }]}>
+          <Text style={styles.logoBadgeText}>H</Text>
         </View>
+
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-              {title}
+            <Text style={styles.titleText} numberOfLines={1}>
+              <Text style={{ color: colors.text }}>HackerRank </Text>
+              <Text style={{ color: colors.brandGreen }}>CampusCrew</Text>
             </Text>
             <View
               style={[
                 styles.versionTag,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
-                  borderColor: isDark ? '#334155' : '#C7D2FE',
+                  backgroundColor: colors.primaryLight,
+                  borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                 },
               ]}
             >
               <Text
                 style={[
                   styles.versionText,
-                  { color: isDark ? '#A5B4FC' : '#4F46E5' },
+                  { color: isDark ? colors.brandGreen : '#047857' },
                 ]}
               >
-                PRO
+                SRM
               </Text>
             </View>
           </View>
@@ -70,8 +72,8 @@ export const Header: React.FC<HeaderProps> = ({
           style={[
             styles.themeToggleBtn,
             {
-              backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-              borderColor: isDark ? '#334155' : '#E2E8F0',
+              backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+              borderColor: isDark ? '#26362C' : '#E2E8F0',
             },
           ]}
           onPress={toggleTheme}
@@ -82,19 +84,26 @@ export const Header: React.FC<HeaderProps> = ({
           <Ionicons
             name={isDark ? 'sunny' : 'moon'}
             size={18}
-            color={isDark ? '#FBBF24' : '#6366F1'}
+            color={isDark ? '#05C770' : '#475569'}
           />
         </TouchableOpacity>
 
-        {/* Desktop / Tablet Quick Actions (FAB provides access on mobile) */}
+        {/* Desktop / Tablet Quick Actions */}
         {activeTab === 'meetings' && onNewMeeting && (
           <TouchableOpacity
             style={[styles.primaryActionButton, { backgroundColor: colors.primary }]}
             onPress={onNewMeeting}
             activeOpacity={0.8}
           >
-            <Ionicons name="add-circle" size={17} color="#FFFFFF" />
-            <Text style={styles.primaryActionText}>+ New Meeting</Text>
+            <Ionicons name="add-circle" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+            <Text
+              style={[
+                styles.primaryActionText,
+                { color: isDark ? '#070707' : '#FFFFFF' },
+              ]}
+            >
+              + New Meeting
+            </Text>
           </TouchableOpacity>
         )}
 
@@ -104,8 +113,15 @@ export const Header: React.FC<HeaderProps> = ({
             onPress={onNewMember}
             activeOpacity={0.8}
           >
-            <Ionicons name="person-add" size={17} color="#FFFFFF" />
-            <Text style={styles.primaryActionText}>+ Add Member</Text>
+            <Ionicons name="person-add" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+            <Text
+              style={[
+                styles.primaryActionText,
+                { color: isDark ? '#070707' : '#FFFFFF' },
+              ]}
+            >
+              + Add Member
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -132,16 +148,22 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#4F46E5',
+    shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
     elevation: 3,
+  },
+  logoBadgeText: {
+    color: '#070707',
+    fontWeight: '900',
+    fontSize: 20,
+    fontFamily: Platform.OS === 'ios' ? 'HelveticaNeue-Bold' : 'sans-serif-black',
   },
   titleContainer: {
     justifyContent: 'center',
@@ -154,7 +176,7 @@ const styles = StyleSheet.create({
     gap: 6,
     flexWrap: 'nowrap',
   },
-  title: {
+  titleText: {
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -162,16 +184,16 @@ const styles = StyleSheet.create({
   versionTag: {
     paddingHorizontal: 6,
     paddingVertical: 1.5,
-    borderRadius: 5,
+    borderRadius: 4,
     borderWidth: 1,
   },
   versionText: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 9.5,
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -181,9 +203,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   themeToggleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -195,15 +217,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    shadowColor: '#4F46E5',
+    shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
   },
   primaryActionText: {
-    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

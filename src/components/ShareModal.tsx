@@ -117,14 +117,33 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             onPress={handleCopyText}
             activeOpacity={0.85}
           >
-            <View style={styles.whatsappIconCircle}>
-              <Ionicons name={copied ? 'checkmark-circle' : 'logo-whatsapp'} size={20} color="#FFFFFF" />
+            <View
+              style={[
+                styles.whatsappIconCircle,
+                { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.2)' },
+              ]}
+            >
+              <Ionicons
+                name={copied ? 'checkmark-circle' : 'logo-whatsapp'}
+                size={20}
+                color={isDark ? '#070707' : '#FFFFFF'}
+              />
             </View>
             <View style={styles.whatsappTextCol}>
-              <Text style={styles.whatsappBannerTitle}>
+              <Text
+                style={[
+                  styles.whatsappBannerTitle,
+                  { color: isDark ? '#070707' : '#FFFFFF' },
+                ]}
+              >
                 {copied ? 'Copied to Clipboard!' : 'Copy Summary for WhatsApp'}
               </Text>
-              <Text style={styles.whatsappBannerSubtitle}>
+              <Text
+                style={[
+                  styles.whatsappBannerSubtitle,
+                  { color: isDark ? 'rgba(7, 7, 7, 0.85)' : 'rgba(255, 255, 255, 0.9)' },
+                ]}
+              >
                 Ready formatted with emojis, present/absent names & stats
               </Text>
             </View>

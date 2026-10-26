@@ -50,7 +50,6 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  // By default show 'unmarked' first so roll call is fast and effortless
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>(() => {
     const initialMarkedCount = Object.keys(initialAttendance?.statuses || {}).length;
     if (members.length > 0 && initialMarkedCount >= members.length) {
@@ -215,7 +214,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           <View
             style={[
               styles.avatar,
-              { backgroundColor: item.avatarColor || colors.primary },
+              { backgroundColor: item.avatarColor || (isDark ? '#04B264' : '#049D57') },
             ]}
           >
             <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
@@ -231,12 +230,14 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                   style={[
                     styles.raBadge,
                     {
-                      backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-                      borderColor: isDark ? '#334155' : '#E2E8F0',
+                      backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                      borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                     },
                   ]}
                 >
-                  <Text style={[styles.raText, { color: colors.primary }]}>{item.raNo}</Text>
+                  <Text style={[styles.raText, { color: isDark ? colors.brandGreen : '#047857' }]}>
+                    {item.raNo}
+                  </Text>
                 </View>
               ) : null}
             </View>
@@ -247,18 +248,28 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 style={[
                   styles.roleBadgeMini,
                   {
-                    backgroundColor: isDark ? '#1E293B' : roleConfig.badgeBg,
-                    borderColor: isDark ? '#334155' : roleConfig.badgeBorder,
+                    backgroundColor: isDark ? '#161E19' : roleConfig.badgeBg,
+                    borderColor: isDark ? '#26362C' : roleConfig.badgeBorder,
                   },
                 ]}
               >
                 <Ionicons
                   name={roleConfig.icon as any}
                   size={11}
-                  color={roleConfig.textColor}
+                  color={isDark && roleConfig.tier === 'member' ? colors.brandGreen : roleConfig.textColor}
                   style={{ marginRight: 3 }}
                 />
-                <Text style={[styles.roleBadgeMiniText, { color: roleConfig.textColor }]}>
+                <Text
+                  style={[
+                    styles.roleBadgeMiniText,
+                    {
+                      color:
+                        isDark && roleConfig.tier === 'member'
+                          ? colors.brandGreen
+                          : roleConfig.textColor,
+                    },
+                  ]}
+                >
                   {roleConfig.label}
                 </Text>
               </View>
@@ -268,8 +279,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                   style={[
                     styles.domainTag,
                     {
-                      backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-                      borderColor: isDark ? '#334155' : '#E2E8F0',
+                      backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                      borderColor: isDark ? '#26362C' : '#E2E8F0',
                     },
                   ]}
                 >
@@ -286,8 +297,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             style={[
               styles.noteBtn,
               hasNote && {
-                backgroundColor: isDark ? '#232946' : '#EEF2FF',
-                borderColor: colors.primary,
+                backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5',
+                borderColor: colors.brandGreen,
               },
             ]}
             onPress={() => openNoteModal(item)}
@@ -296,8 +307,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Ionicons
               name={hasNote ? 'chatbubble-ellipses' : 'chatbubble-outline'}
-              size={16}
-              color={hasNote ? colors.primary : colors.textMuted}
+              size={15}
+              color={hasNote ? colors.brandGreen : colors.textMuted}
             />
           </TouchableOpacity>
         </View>
@@ -307,8 +318,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             style={[
               styles.noteSnippetBox,
               {
-                backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
-                borderColor: isDark ? '#334155' : '#E2E8F0',
+                backgroundColor: isDark ? '#161E19' : '#F8FAFC',
+                borderColor: isDark ? '#26362C' : '#E2E8F0',
               },
             ]}
           >
@@ -319,19 +330,19 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
         )}
 
         {/* Bottom Action Row: Large Thumb-Friendly Buttons (Present / Absent) */}
-        <View style={styles.actionButtonsRow}>
+        <View style={[styles.actionButtonsRow, { borderTopColor: isDark ? '#1F2E24' : '#E2E8F0' }]}>
           {/* Present Button */}
           <TouchableOpacity
             style={[
               styles.statusButton,
               status === 'present'
                 ? {
-                    backgroundColor: '#10B981',
-                    borderColor: '#059669',
+                    backgroundColor: colors.brandGreen,
+                    borderColor: '#04B264',
                   }
                 : {
-                    backgroundColor: isDark ? '#064E3B20' : '#ECFDF5',
-                    borderColor: isDark ? '#047857' : '#A7F3D0',
+                    backgroundColor: isDark ? 'rgba(5, 199, 112, 0.08)' : '#ECFDF5',
+                    borderColor: isDark ? 'rgba(5, 199, 112, 0.25)' : '#A7F3D0',
                   },
             ]}
             onPress={() => handleSetStatus(item.id, 'present')}
@@ -340,16 +351,16 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Ionicons
               name={status === 'present' ? 'checkmark-circle' : 'checkmark'}
-              size={18}
-              color={status === 'present' ? '#FFFFFF' : '#059669'}
+              size={17}
+              color={status === 'present' ? (isDark ? '#070707' : '#FFFFFF') : (isDark ? colors.brandGreen : '#047857')}
               style={{ marginRight: 6 }}
             />
             <Text
               style={[
                 styles.statusButtonText,
                 {
-                  color: status === 'present' ? '#FFFFFF' : '#059669',
-                  fontWeight: status === 'present' ? '800' : '700',
+                  color: status === 'present' ? (isDark ? '#070707' : '#FFFFFF') : (isDark ? colors.brandGreen : '#047857'),
+                  fontWeight: status === 'present' ? '900' : '700',
                 },
               ]}
             >
@@ -363,12 +374,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               styles.statusButton,
               status === 'absent'
                 ? {
-                    backgroundColor: '#EF4444',
-                    borderColor: '#DC2626',
+                    backgroundColor: colors.danger,
+                    borderColor: '#E04840',
                   }
                 : {
-                    backgroundColor: isDark ? '#450A0A20' : '#FEF2F2',
-                    borderColor: isDark ? '#991B1B' : '#FECACA',
+                    backgroundColor: isDark ? 'rgba(255, 95, 86, 0.08)' : '#FEF2F2',
+                    borderColor: isDark ? 'rgba(255, 95, 86, 0.25)' : '#FECACA',
                   },
             ]}
             onPress={() => handleSetStatus(item.id, 'absent')}
@@ -377,16 +388,16 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Ionicons
               name={status === 'absent' ? 'close-circle' : 'close'}
-              size={18}
-              color={status === 'absent' ? '#FFFFFF' : '#DC2626'}
+              size={17}
+              color={status === 'absent' ? '#FFFFFF' : (isDark ? colors.danger : '#DC2626')}
               style={{ marginRight: 6 }}
             />
             <Text
               style={[
                 styles.statusButtonText,
                 {
-                  color: status === 'absent' ? '#FFFFFF' : '#DC2626',
-                  fontWeight: status === 'absent' ? '800' : '700',
+                  color: status === 'absent' ? '#FFFFFF' : (isDark ? colors.danger : '#DC2626'),
+                  fontWeight: status === 'absent' ? '900' : '700',
                 },
               ]}
             >
@@ -434,8 +445,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           onPress={() => onOpenShare(meeting, attendance)}
           activeOpacity={0.8}
         >
-          <Ionicons name="share-social-outline" size={15} color="#FFFFFF" />
-          <Text style={styles.shareHeaderText}>Share</Text>
+          <Ionicons name="share-social-outline" size={15} color={isDark ? '#070707' : '#FFFFFF'} />
+          <Text style={[styles.shareHeaderText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
+            Share
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -459,8 +472,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: colors.success }]}>{summary.present}</Text>
-              <Text style={[styles.metricLabel, { color: colors.success }]}>Present</Text>
+              <Text style={[styles.metricValue, { color: colors.brandGreen }]}>{summary.present}</Text>
+              <Text style={[styles.metricLabel, { color: colors.brandGreen }]}>Present</Text>
             </View>
 
             <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
@@ -482,10 +495,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: colors.primary }]}>
+              <Text style={[styles.metricValue, { color: colors.brandGreen }]}>
                 {summary.percentage}%
               </Text>
-              <Text style={[styles.metricLabel, { color: colors.primary }]}>Turnout</Text>
+              <Text style={[styles.metricLabel, { color: colors.brandGreen }]}>Turnout</Text>
             </View>
           </View>
 
@@ -493,7 +506,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           <View
             style={[
               styles.progressTrack,
-              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              { backgroundColor: isDark ? '#161E19' : '#F1F5F9' },
             ]}
           >
             <View
@@ -501,7 +514,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 styles.progressBar,
                 {
                   width: `${Math.min(100, Math.max(0, summary.percentage))}%`,
-                  backgroundColor: summary.percentage >= 75 ? '#10B981' : colors.primary,
+                  backgroundColor: summary.percentage >= 75 ? colors.brandGreen : colors.warning,
                 },
               ]}
             />
@@ -514,15 +527,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             style={[
               styles.bulkBtn,
               {
-                backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
-                borderColor: isDark ? '#047857' : '#A7F3D0',
+                backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
               },
             ]}
             onPress={handleMarkAllPresent}
             activeOpacity={0.7}
           >
-            <Ionicons name="flash" size={13} color={isDark ? '#34D399' : '#047857'} />
-            <Text style={[styles.bulkBtnText, { color: isDark ? '#34D399' : '#047857' }]}>
+            <Ionicons name="flash" size={13} color={isDark ? colors.brandGreen : '#047857'} />
+            <Text style={[styles.bulkBtnText, { color: isDark ? colors.brandGreen : '#047857' }]}>
               All Present
             </Text>
           </TouchableOpacity>
@@ -531,15 +544,15 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             style={[
               styles.bulkBtn,
               {
-                backgroundColor: isDark ? '#450A0A' : '#FEF2F2',
-                borderColor: isDark ? '#991B1B' : '#FECACA',
+                backgroundColor: isDark ? 'rgba(255, 95, 86, 0.12)' : '#FEF2F2',
+                borderColor: isDark ? 'rgba(255, 95, 86, 0.3)' : '#FECACA',
               },
             ]}
             onPress={handleMarkAllAbsent}
             activeOpacity={0.7}
           >
-            <Ionicons name="close-circle-outline" size={13} color={isDark ? '#FCA5A5' : '#B91C1C'} />
-            <Text style={[styles.bulkBtnText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>
+            <Ionicons name="close-circle-outline" size={13} color={isDark ? colors.danger : '#B91C1C'} />
+            <Text style={[styles.bulkBtnText, { color: isDark ? colors.danger : '#B91C1C' }]}>
               All Absent
             </Text>
           </TouchableOpacity>
@@ -548,7 +561,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
             style={[
               styles.bulkBtn,
               {
-                backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                backgroundColor: isDark ? '#161E19' : '#F8FAFC',
                 borderColor: colors.cardBorder,
               },
             ]}
@@ -600,12 +613,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               {
                 backgroundColor:
                   selectedFilter === 'unmarked'
-                    ? colors.primary
+                    ? colors.brandGreen
                     : isDark
-                    ? '#1E293B'
+                    ? '#161E19'
                     : '#F1F5F9',
                 borderColor:
-                  selectedFilter === 'unmarked' ? colors.primary : colors.cardBorder,
+                  selectedFilter === 'unmarked' ? colors.brandGreen : colors.cardBorder,
               },
             ]}
             onPress={() => setSelectedFilter('unmarked')}
@@ -615,8 +628,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 styles.filterPillText,
                 {
                   color:
-                    selectedFilter === 'unmarked' ? '#FFFFFF' : colors.textSecondary,
-                  fontWeight: selectedFilter === 'unmarked' ? '700' : '600',
+                    selectedFilter === 'unmarked'
+                      ? (isDark ? '#070707' : '#FFFFFF')
+                      : colors.textSecondary,
+                  fontWeight: selectedFilter === 'unmarked' ? '800' : '600',
                 },
               ]}
             >
@@ -630,12 +645,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               {
                 backgroundColor:
                   selectedFilter === 'all'
-                    ? colors.primary
+                    ? colors.brandGreen
                     : isDark
-                    ? '#1E293B'
+                    ? '#161E19'
                     : '#F1F5F9',
                 borderColor:
-                  selectedFilter === 'all' ? colors.primary : colors.cardBorder,
+                  selectedFilter === 'all' ? colors.brandGreen : colors.cardBorder,
               },
             ]}
             onPress={() => setSelectedFilter('all')}
@@ -645,8 +660,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 styles.filterPillText,
                 {
                   color:
-                    selectedFilter === 'all' ? '#FFFFFF' : colors.textSecondary,
-                  fontWeight: selectedFilter === 'all' ? '700' : '600',
+                    selectedFilter === 'all'
+                      ? (isDark ? '#070707' : '#FFFFFF')
+                      : colors.textSecondary,
+                  fontWeight: selectedFilter === 'all' ? '800' : '600',
                 },
               ]}
             >
@@ -660,12 +677,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               {
                 backgroundColor:
                   selectedFilter === 'present'
-                    ? '#10B981'
+                    ? colors.brandGreen
                     : isDark
-                    ? '#1E293B'
+                    ? '#161E19'
                     : '#F1F5F9',
                 borderColor:
-                  selectedFilter === 'present' ? '#10B981' : colors.cardBorder,
+                  selectedFilter === 'present' ? colors.brandGreen : colors.cardBorder,
               },
             ]}
             onPress={() => setSelectedFilter('present')}
@@ -675,8 +692,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 styles.filterPillText,
                 {
                   color:
-                    selectedFilter === 'present' ? '#FFFFFF' : colors.textSecondary,
-                  fontWeight: selectedFilter === 'present' ? '700' : '600',
+                    selectedFilter === 'present'
+                      ? (isDark ? '#070707' : '#FFFFFF')
+                      : colors.textSecondary,
+                  fontWeight: selectedFilter === 'present' ? '800' : '600',
                 },
               ]}
             >
@@ -690,12 +709,12 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               {
                 backgroundColor:
                   selectedFilter === 'absent'
-                    ? '#EF4444'
+                    ? colors.danger
                     : isDark
-                    ? '#1E293B'
+                    ? '#161E19'
                     : '#F1F5F9',
                 borderColor:
-                  selectedFilter === 'absent' ? '#EF4444' : colors.cardBorder,
+                  selectedFilter === 'absent' ? colors.danger : colors.cardBorder,
               },
             ]}
             onPress={() => setSelectedFilter('absent')}
@@ -706,7 +725,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 {
                   color:
                     selectedFilter === 'absent' ? '#FFFFFF' : colors.textSecondary,
-                  fontWeight: selectedFilter === 'absent' ? '700' : '600',
+                  fontWeight: selectedFilter === 'absent' ? '800' : '600',
                 },
               ]}
             >
@@ -730,17 +749,17 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                   styles.allDoneCard,
                   {
                     backgroundColor: colors.surface,
-                    borderColor: isDark ? '#064E3B' : '#A7F3D0',
+                    borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                   },
                 ]}
               >
                 <View
                   style={[
                     styles.allDoneIconCircle,
-                    { backgroundColor: isDark ? '#064E3B' : '#ECFDF5' },
+                    { backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5' },
                   ]}
                 >
-                  <Ionicons name="checkmark-done-circle" size={44} color="#10B981" />
+                  <Ionicons name="checkmark-done-circle" size={44} color={colors.brandGreen} />
                 </View>
                 <Text style={[styles.allDoneTitle, { color: colors.text }]}>All Members Marked!</Text>
                 <Text style={[styles.allDoneSubtitle, { color: colors.textSecondary }]}>
@@ -751,14 +770,14 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                     style={[
                       styles.allDoneBtnReview,
                       {
-                        backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
-                        borderColor: colors.primary,
+                        backgroundColor: isDark ? '#161E19' : '#ECFDF5',
+                        borderColor: isDark ? '#26362C' : '#A7F3D0',
                       },
                     ]}
                     onPress={() => setSelectedFilter('all')}
                   >
-                    <Ionicons name="list" size={14} color={colors.primary} />
-                    <Text style={[styles.allDoneBtnTextReview, { color: colors.primary }]}>
+                    <Ionicons name="list" size={14} color={colors.brandGreen} />
+                    <Text style={[styles.allDoneBtnTextReview, { color: isDark ? colors.brandGreen : colors.primary }]}>
                       Review All ({members.length})
                     </Text>
                   </TouchableOpacity>
@@ -766,8 +785,10 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                     style={[styles.allDoneBtnShare, { backgroundColor: colors.primary }]}
                     onPress={() => onOpenShare(meeting, attendance)}
                   >
-                    <Ionicons name="share-social-outline" size={14} color="#FFFFFF" />
-                    <Text style={styles.allDoneBtnTextShare}>Share Report</Text>
+                    <Ionicons name="share-social-outline" size={14} color={isDark ? '#070707' : '#FFFFFF'} />
+                    <Text style={[styles.allDoneBtnTextShare, { color: isDark ? '#070707' : '#FFFFFF' }]}>
+                      Share Report
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -832,7 +853,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 style={[
                   styles.noteCancelBtn,
                   {
-                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                    backgroundColor: isDark ? '#161E19' : '#F1F5F9',
                   },
                 ]}
                 onPress={() => setEditingNoteMember(null)}
@@ -844,7 +865,9 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
                 style={[styles.noteSaveBtn, { backgroundColor: colors.primary }]}
                 onPress={saveMemberNote}
               >
-                <Text style={styles.noteSaveText}>Save Note</Text>
+                <Text style={[styles.noteSaveText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
+                  Save Note
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -899,9 +922,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   shareHeaderText: {
-    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   contentWrapper: {
     flex: 1,
@@ -1020,13 +1042,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 36,
     height: 36,
-    borderRadius: 9,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: '#070707',
+    fontWeight: '900',
     fontSize: 13,
   },
   memberInfo: {
@@ -1108,7 +1130,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
   },
   statusButton: {
     flex: 1,
@@ -1176,9 +1197,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   allDoneBtnTextShare: {
-    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -1242,8 +1262,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   noteSaveText: {
-    color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

@@ -430,8 +430,10 @@ function AppContent() {
                         styles.domainChipText,
                         {
                           color:
-                            selectedDomain === dom ? '#FFFFFF' : colors.textSecondary,
-                          fontWeight: selectedDomain === dom ? '700' : '600',
+                            selectedDomain === dom
+                              ? (isDark ? '#070707' : '#FFFFFF')
+                              : colors.textSecondary,
+                          fontWeight: selectedDomain === dom ? '800' : '600',
                         },
                       ]}
                     >
@@ -446,15 +448,15 @@ function AppContent() {
                   style={[
                     styles.importRosterBtn,
                     {
-                      backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
-                      borderColor: isDark ? '#334155' : '#C7D2FE',
+                      backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                      borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                     },
                   ]}
                   onPress={() => setIsBulkImportVisible(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="flash-outline" size={13} color={colors.primary} />
-                  <Text style={[styles.importRosterText, { color: colors.primary }]}>
+                  <Ionicons name="flash-outline" size={13} color={colors.brandGreen} />
+                  <Text style={[styles.importRosterText, { color: isDark ? colors.brandGreen : colors.primary }]}>
                     Import / Update
                   </Text>
                 </TouchableOpacity>
@@ -464,15 +466,15 @@ function AppContent() {
                     style={[
                       styles.exportRosterBtn,
                       {
-                        backgroundColor: isDark ? '#1E293B' : '#ECFDF5',
-                        borderColor: isDark ? '#047857' : '#A7F3D0',
+                        backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                        borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                       },
                     ]}
                     onPress={() => setIsExportMembersVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="share-outline" size={13} color={colors.success} />
-                    <Text style={[styles.exportRosterText, { color: colors.success }]}>
+                    <Ionicons name="share-outline" size={13} color={colors.brandGreen} />
+                    <Text style={[styles.exportRosterText, { color: isDark ? colors.brandGreen : colors.primary }]}>
                       Extract / Export
                     </Text>
                   </TouchableOpacity>
@@ -531,9 +533,9 @@ function AppContent() {
             <Ionicons
               name={activeTab === 'meetings' ? 'add' : 'person-add'}
               size={19}
-              color="#FFFFFF"
+              color={isDark ? '#070707' : '#FFFFFF'}
             />
-            <Text style={styles.fabText}>
+            <Text style={[styles.fabText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
               {activeTab === 'meetings' ? 'New Meeting' : 'Add Member'}
             </Text>
           </TouchableOpacity>
@@ -729,7 +731,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 11,
     borderRadius: 28,
-    shadowColor: '#4F46E5',
+    shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

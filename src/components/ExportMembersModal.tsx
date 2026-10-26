@@ -140,9 +140,14 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
               <Ionicons
                 name={copied ? 'checkmark-circle' : 'copy'}
                 size={15}
-                color="#FFFFFF"
+                color={isDark ? '#070707' : '#FFFFFF'}
               />
-              <Text style={styles.copyActionBtnText}>
+              <Text
+                style={[
+                  styles.copyActionBtnText,
+                  { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
+                ]}
+              >
                 {copied ? 'Copied!' : 'Copy for WhatsApp'}
               </Text>
             </TouchableOpacity>

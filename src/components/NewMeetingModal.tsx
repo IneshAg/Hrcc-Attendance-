@@ -223,8 +223,15 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
               style={[styles.submitButton, { backgroundColor: colors.primary }]}
               onPress={handleSubmit}
             >
-              <Ionicons name="calendar" size={17} color="#FFFFFF" />
-              <Text style={styles.submitButtonText}>Create Meeting</Text>
+              <Ionicons name="calendar" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+              <Text
+                style={[
+                  styles.submitButtonText,
+                  { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
+                ]}
+              >
+                Create Meeting
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 8,
-    shadowColor: '#4F46E5',
+    shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

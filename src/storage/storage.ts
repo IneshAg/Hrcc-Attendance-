@@ -76,7 +76,7 @@ const mapDbMemberToApp = (db: DbMember): ClubMember => ({
   domain: db.domain || 'None',
   role: db.role || 'Member',
   phone: db.phone || '',
-  avatarColor: db.avatar_color || '#4F46E5',
+  avatarColor: db.avatar_color || '#05C770',
   joinedDate: db.created_at ? db.created_at.split('T')[0] : '',
 });
 
@@ -160,7 +160,7 @@ export const addMember = async (newMember: Omit<ClubMember, 'id'>): Promise<Club
     role: newMember.role || 'Member',
     email: sanitize(newMember.srmEmail) || sanitize(newMember.personalEmail) || null,
     phone: sanitize(newMember.phone) || null,
-    avatar_color: newMember.avatarColor || '#4F46E5',
+    avatar_color: newMember.avatarColor || '#05C770',
   };
 
   let { data, error } = await supabase
@@ -183,7 +183,7 @@ export const addMember = async (newMember: Omit<ClubMember, 'id'>): Promise<Club
       role: newMember.role || 'Member',
       email: sanitize(newMember.srmEmail) || sanitize(newMember.personalEmail) || null,
       phone: sanitize(newMember.phone) || null,
-      avatar_color: newMember.avatarColor || '#4F46E5',
+      avatar_color: newMember.avatarColor || '#05C770',
     };
     const res = await supabase.from('club_members').insert([basicPayload]).select().single();
     data = res.data;
@@ -331,7 +331,7 @@ export const bulkUpsertMembers = async (
           domain: row.domain || 'None',
           role: row.role || 'Member',
           phone: sanitize(row.phone) || undefined,
-          avatarColor: '#4F46E5',
+          avatarColor: '#05C770',
         });
       }
     } catch (rowErr) {

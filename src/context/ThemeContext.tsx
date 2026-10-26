@@ -14,6 +14,7 @@ export interface ThemeColors {
   primary: string;
   primaryLight: string;
   primaryDark: string;
+  brandGreen: string;
   success: string;
   successLight: string;
   danger: string;
@@ -30,59 +31,64 @@ export interface ThemeColors {
   isDark: boolean;
 }
 
+// Light theme aligned with HackerRank Campus Crew SRM identity
 const lightColors: ThemeColors = {
-  background: '#F8FAFC',
+  background: '#F8FAF9',
   surface: '#FFFFFF',
-  surfaceSecondary: '#F1F5F9',
+  surfaceSecondary: '#F0FDF4',
   card: '#FFFFFF',
   cardBorder: '#E2E8F0',
-  text: '#0F172A',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  primary: '#4F46E5',
-  primaryLight: '#EEF2FF',
-  primaryDark: '#3730A3',
-  success: '#059669',
+  text: '#090D0B',
+  textSecondary: '#4B5563',
+  textMuted: '#9CA3AF',
+  primary: '#049D57', // Contrast-optimized HackerRank Green for white canvas
+  primaryLight: '#ECFDF5',
+  primaryDark: '#037A44',
+  brandGreen: '#05C770',
+  success: '#05C770',
   successLight: '#ECFDF5',
-  danger: '#DC2626',
+  danger: '#EF4444',
   dangerLight: '#FEF2F2',
-  warning: '#D97706',
+  warning: '#F59E0B',
   warningLight: '#FFFBEB',
   inputBg: '#FFFFFF',
   inputBorder: '#CBD5E1',
-  divider: '#E2E8F0',
-  chipBg: '#F1F5F9',
-  chipBorder: '#E2E8F0',
-  chipText: '#475569',
-  modalOverlay: 'rgba(15, 23, 42, 0.45)',
+  divider: '#E5E7EB',
+  chipBg: '#F0FDF4',
+  chipBorder: '#D1FAE5',
+  chipText: '#065F46',
+  modalOverlay: 'rgba(9, 13, 11, 0.55)',
   isDark: false,
 };
 
+// Dark theme matching the official https://www.hrccsrm.xyz palette:
+// Deep black (#070707), electric HackerRank green (#05C770 / #00c758), terminal red (#FF5F56), terminal amber (#FFBD2E), carbon surfaces (#111613), subtle forest-charcoal borders (#1F2E24)
 const darkColors: ThemeColors = {
-  background: '#0B0F17',
-  surface: '#151D2A',
-  surfaceSecondary: '#1E293B',
-  card: '#151D2A',
-  cardBorder: '#253347',
-  text: '#F8FAFC',
-  textSecondary: '#94A3B8',
-  textMuted: '#64748B',
-  primary: '#6366F1',
-  primaryLight: '#232946',
-  primaryDark: '#4F46E5',
-  success: '#10B981',
-  successLight: '#064E3B',
-  danger: '#EF4444',
-  dangerLight: '#450A0A',
-  warning: '#F59E0B',
-  warningLight: '#451A03',
-  inputBg: '#0B0F17',
-  inputBorder: '#334155',
-  divider: '#253347',
-  chipBg: '#1E293B',
-  chipBorder: '#334155',
-  chipText: '#CBD5E1',
-  modalOverlay: 'rgba(0, 0, 0, 0.75)',
+  background: '#070707',
+  surface: '#111613',
+  surfaceSecondary: '#161E19',
+  card: '#111613',
+  cardBorder: '#1F2E24',
+  text: '#FFFFFF',
+  textSecondary: '#99A1AF',
+  textMuted: '#6B7280',
+  primary: '#05C770', // Electric HackerRank Campus Crew Green
+  primaryLight: 'rgba(5, 199, 112, 0.12)',
+  primaryDark: '#04B264',
+  brandGreen: '#05C770',
+  success: '#05C770',
+  successLight: 'rgba(5, 199, 112, 0.15)',
+  danger: '#FF5F56', // Terminal Mac red from hrccsrm.xyz
+  dangerLight: 'rgba(255, 95, 86, 0.15)',
+  warning: '#FFBD2E', // Terminal Mac amber from hrccsrm.xyz
+  warningLight: 'rgba(255, 189, 46, 0.15)',
+  inputBg: '#0A0E0C',
+  inputBorder: '#223328',
+  divider: '#1F2E24',
+  chipBg: '#161E19',
+  chipBorder: '#233429',
+  chipText: '#D1D5DB',
+  modalOverlay: 'rgba(0, 0, 0, 0.85)',
   isDark: true,
 };
 
@@ -96,15 +102,16 @@ interface ThemeContextType {
 const THEME_STORAGE_KEY = '@hrcc_theme_preference';
 
 const ThemeContext = createContext<ThemeContextType>({
-  isDark: false,
-  colors: lightColors,
+  isDark: true, // Default to dark aesthetic matching hrccsrm.xyz
+  colors: darkColors,
   toggleTheme: () => {},
   setThemeMode: () => {},
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<'light' | 'dark' | 'system'>('system');
+  // By default, match the dark obsidian & green aesthetic of hrccsrm.xyz
+  const [themeMode, setThemeModeState] = useState<'light' | 'dark' | 'system'>('dark');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {

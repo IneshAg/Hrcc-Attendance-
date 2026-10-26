@@ -46,9 +46,9 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
   };
 
   const getPercentageColor = (pct: number) => {
-    if (pct >= 80) return '#10B981'; // Green
-    if (pct >= 60) return '#F59E0B'; // Amber
-    return '#EF4444'; // Red
+    if (pct >= 80) return colors.brandGreen; // HackerRank Green
+    if (pct >= 60) return colors.warning;    // Amber
+    return colors.danger;                   // Terminal Red
   };
 
   return (
@@ -85,14 +85,14 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
           style={[
             styles.deleteButton,
             {
-              backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+              backgroundColor: isDark ? '#161E19' : '#F8FAFC',
             },
           ]}
           onPress={() => onDelete(meeting.id)}
           accessibilityLabel="Delete Meeting"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -112,12 +112,12 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
                   style={[
                     styles.badgePill,
                     {
-                      backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
-                      borderColor: isDark ? '#047857' : '#A7F3D0',
+                      backgroundColor: isDark ? 'rgba(5, 199, 112, 0.15)' : '#ECFDF5',
+                      borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                     },
                   ]}
                 >
-                  <Text style={[styles.badgePillText, { color: isDark ? '#34D399' : '#047857' }]}>
+                  <Text style={[styles.badgePillText, { color: isDark ? colors.brandGreen : '#047857' }]}>
                     🟢 {summary.present} Present
                   </Text>
                 </View>
@@ -127,12 +127,12 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
                     style={[
                       styles.badgePill,
                       {
-                        backgroundColor: isDark ? '#450A0A' : '#FEF2F2',
-                        borderColor: isDark ? '#991B1B' : '#FECACA',
+                        backgroundColor: isDark ? 'rgba(255, 95, 86, 0.15)' : '#FEF2F2',
+                        borderColor: isDark ? 'rgba(255, 95, 86, 0.3)' : '#FECACA',
                       },
                     ]}
                   >
-                    <Text style={[styles.badgePillText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>
+                    <Text style={[styles.badgePillText, { color: isDark ? colors.danger : '#B91C1C' }]}>
                       🔴 {summary.absent} Absent
                     </Text>
                   </View>
@@ -156,7 +156,7 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
             <View
               style={[
                 styles.progressBarBackground,
-                { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+                { backgroundColor: isDark ? '#161E19' : '#F1F5F9' },
               ]}
             >
               <View
@@ -175,13 +175,13 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
             style={[
               styles.unmarkedNotice,
               {
-                backgroundColor: isDark ? '#231D12' : '#FFFBEB',
-                borderColor: isDark ? '#78350F' : '#FDE68A',
+                backgroundColor: isDark ? 'rgba(255, 189, 46, 0.1)' : '#FFFBEB',
+                borderColor: isDark ? 'rgba(255, 189, 46, 0.25)' : '#FDE68A',
               },
             ]}
           >
-            <Ionicons name="alert-circle-outline" size={15} color="#F59E0B" />
-            <Text style={[styles.unmarkedText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+            <Ionicons name="alert-circle-outline" size={15} color={colors.warning} />
+            <Text style={[styles.unmarkedText, { color: isDark ? colors.warning : '#92400E' }]}>
               Attendance not taken • {totalMembersCount} members to roll call
             </Text>
           </View>
@@ -189,7 +189,7 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.cardActions}>
+      <View style={[styles.cardActions, { borderTopColor: isDark ? '#1F2E24' : '#E2E8F0' }]}>
         <TouchableOpacity
           style={[styles.rollCallButton, { backgroundColor: colors.primary }]}
           onPress={() => onOpenRollCall(meeting)}
@@ -198,9 +198,14 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
           <Ionicons
             name={hasAttendance ? 'create-outline' : 'checkmark-circle-outline'}
             size={17}
-            color="#FFFFFF"
+            color={isDark ? '#070707' : '#FFFFFF'}
           />
-          <Text style={styles.rollCallButtonText}>
+          <Text
+            style={[
+              styles.rollCallButtonText,
+              { color: isDark ? '#070707' : '#FFFFFF' },
+            ]}
+          >
             {hasAttendance ? 'Update Roll Call' : 'Take Attendance'}
           </Text>
         </TouchableOpacity>
@@ -210,15 +215,17 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
             style={[
               styles.shareButton,
               {
-                backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-                borderColor: colors.cardBorder,
+                backgroundColor: isDark ? '#161E19' : '#F8FAFC',
+                borderColor: isDark ? '#26362C' : colors.cardBorder,
               },
             ]}
             onPress={() => onShare(meeting)}
             activeOpacity={0.7}
           >
-            <Ionicons name="share-social-outline" size={16} color={colors.primary} />
-            <Text style={[styles.shareButtonText, { color: colors.primary }]}>Share</Text>
+            <Ionicons name="share-social-outline" size={15} color={colors.brandGreen} />
+            <Text style={[styles.shareButtonText, { color: isDark ? colors.brandGreen : colors.primary }]}>
+              Share
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -234,7 +241,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
@@ -362,7 +369,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
   },
   rollCallButton: {
     flex: 1,
@@ -371,17 +377,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 9,
-    shadowColor: '#4F46E5',
+    borderRadius: 8,
+    shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 2,
   },
   rollCallButtonText: {
-    color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   shareButton: {
     flexDirection: 'row',
@@ -390,7 +395,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 9,
+    borderRadius: 8,
     borderWidth: 1,
   },
   shareButtonText: {

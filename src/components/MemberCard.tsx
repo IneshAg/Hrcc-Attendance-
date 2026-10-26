@@ -31,9 +31,9 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
   const attendedMeetings = stats ? stats.attendedMeetings : 0;
 
   const getRateColor = (rate: number) => {
-    if (rate >= 80) return '#10B981';
-    if (rate >= 60) return '#F59E0B';
-    return '#EF4444';
+    if (rate >= 80) return colors.brandGreen;
+    if (rate >= 60) return colors.warning;
+    return colors.danger;
   };
 
   return (
@@ -48,7 +48,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
     >
       {/* Top Header: Avatar, Name, Reg.No, Actions */}
       <View style={styles.headerRow}>
-        <View style={[styles.avatar, { backgroundColor: member.avatarColor || colors.primary }]}>
+        <View style={[styles.avatar, { backgroundColor: member.avatarColor || (isDark ? '#04B264' : '#049D57') }]}>
           <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
         </View>
 
@@ -62,12 +62,14 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
                 style={[
                   styles.raBadge,
                   {
-                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-                    borderColor: isDark ? '#334155' : '#E2E8F0',
+                    backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                    borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                   },
                 ]}
               >
-                <Text style={[styles.raText, { color: colors.primary }]}>{member.raNo}</Text>
+                <Text style={[styles.raText, { color: isDark ? colors.brandGreen : '#047857' }]}>
+                  {member.raNo}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -78,18 +80,28 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
               style={[
                 styles.roleBadge,
                 {
-                  backgroundColor: isDark ? '#1E293B' : roleConfig.badgeBg,
-                  borderColor: isDark ? '#334155' : roleConfig.badgeBorder,
+                  backgroundColor: isDark ? '#161E19' : roleConfig.badgeBg,
+                  borderColor: isDark ? '#26362C' : roleConfig.badgeBorder,
                 },
               ]}
             >
               <Ionicons
                 name={roleConfig.icon as any}
                 size={12}
-                color={roleConfig.textColor}
+                color={isDark && roleConfig.tier === 'member' ? colors.brandGreen : roleConfig.textColor}
                 style={{ marginRight: 3 }}
               />
-              <Text style={[styles.roleBadgeText, { color: roleConfig.textColor }]}>
+              <Text
+                style={[
+                  styles.roleBadgeText,
+                  {
+                    color:
+                      isDark && roleConfig.tier === 'member'
+                        ? colors.brandGreen
+                        : roleConfig.textColor,
+                  },
+                ]}
+              >
                 {roleConfig.label}
               </Text>
             </View>
@@ -99,8 +111,8 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
                 style={[
                   styles.domainTag,
                   {
-                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-                    borderColor: isDark ? '#334155' : '#E2E8F0',
+                    backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                    borderColor: isDark ? '#26362C' : '#E2E8F0',
                   },
                 ]}
               >
@@ -118,38 +130,46 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
             <TouchableOpacity
               style={[
                 styles.actionBtn,
-                { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' },
+                {
+                  backgroundColor: isDark ? '#161E19' : '#ECFDF5',
+                  borderColor: isDark ? '#26362C' : '#A7F3D0',
+                  borderWidth: 1,
+                },
               ]}
               onPress={() => onEdit(member)}
               accessibilityLabel="Edit Member Details"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="create-outline" size={15} color={colors.primary} />
+              <Ionicons name="create-outline" size={14} color={isDark ? colors.brandGreen : colors.primary} />
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             style={[
               styles.actionBtn,
-              { backgroundColor: isDark ? '#1E293B' : '#F8FAFC' },
+              {
+                backgroundColor: isDark ? '#161E19' : '#F8FAFC',
+                borderColor: isDark ? '#26362C' : '#E2E8F0',
+                borderWidth: 1,
+              },
             ]}
             onPress={() => onDelete(member.id)}
             accessibilityLabel="Remove Member"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
+            <Ionicons name="trash-outline" size={14} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Academic Details (Responsive Flow) */}
+      {/* Academic Details */}
       {(member.branch || member.department || member.year || member.section) ? (
         <View
           style={[
             styles.academicBox,
             {
-              backgroundColor: isDark ? '#111827' : '#F8FAFC',
-              borderColor: isDark ? '#1F2937' : '#F1F5F9',
+              backgroundColor: isDark ? '#0A0E0C' : '#F8FAFC',
+              borderColor: isDark ? '#1F2E24' : '#F1F5F9',
             },
           ]}
         >
@@ -181,7 +201,10 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
           <View
             style={[
               styles.contactItem,
-              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              {
+                backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                borderColor: isDark ? '#26362C' : 'transparent',
+              },
             ]}
           >
             <Ionicons name="call-outline" size={12} color={colors.textMuted} />
@@ -193,10 +216,13 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
           <View
             style={[
               styles.contactItem,
-              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              {
+                backgroundColor: isDark ? '#161E19' : '#ECFDF5',
+                borderColor: isDark ? '#26362C' : '#A7F3D0',
+              },
             ]}
           >
-            <Ionicons name="school-outline" size={12} color={colors.primary} />
+            <Ionicons name="school-outline" size={12} color={isDark ? colors.brandGreen : colors.primary} />
             <Text style={[styles.contactText, { color: colors.textSecondary }]} numberOfLines={1}>
               {member.srmEmail}
             </Text>
@@ -207,7 +233,10 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
           <View
             style={[
               styles.contactItem,
-              { backgroundColor: isDark ? '#0A2540' : '#EFF6FF' },
+              {
+                backgroundColor: isDark ? '#0A2540' : '#EFF6FF',
+                borderColor: isDark ? '#1E3A8A' : '#BFDBFE',
+              },
             ]}
           >
             <Ionicons name="logo-linkedin" size={12} color="#0A66C2" />
@@ -221,7 +250,10 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
           <View
             style={[
               styles.contactItem,
-              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              {
+                backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                borderColor: isDark ? '#26362C' : '#E2E8F0',
+              },
             ]}
           >
             <Ionicons name="logo-github" size={12} color={colors.text} />
@@ -234,7 +266,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
 
       {/* Attendance Stats Bar */}
       {totalMeetings > 0 && (
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { borderTopColor: isDark ? '#1F2E24' : '#E2E8F0' }]}>
           <View style={styles.statsLabelRow}>
             <Text style={[styles.statsTitle, { color: colors.textMuted }]}>Attendance Turnout</Text>
             <Text style={[styles.statsRate, { color: getRateColor(attendanceRate) }]}>
@@ -244,7 +276,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
           <View
             style={[
               styles.progressTrack,
-              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              { backgroundColor: isDark ? '#161E19' : '#F1F5F9' },
             ]}
           >
             <View
@@ -283,13 +315,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: '#070707',
+    fontWeight: '900',
     fontSize: 14,
   },
   headerInfo: {
@@ -329,7 +361,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
-    borderRadius: 5,
+    borderRadius: 4,
     borderWidth: 1,
   },
   roleBadgeText: {
@@ -339,7 +371,7 @@ const styles = StyleSheet.create({
   domainTag: {
     paddingHorizontal: 7,
     paddingVertical: 2.5,
-    borderRadius: 5,
+    borderRadius: 4,
     borderWidth: 1,
   },
   domainText: {
@@ -398,6 +430,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
     maxWidth: '100%',
   },
   contactText: {
@@ -407,7 +440,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E2E8F0',
   },
   statsLabelRow: {
     flexDirection: 'row',
