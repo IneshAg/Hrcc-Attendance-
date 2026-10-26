@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
-import { parseKeyValueText } from '../utils/csvParser';
+import { parseKeyValueText, getYearFromRaNo } from '../utils/csvParser';
 import { useTheme } from '../context/ThemeContext';
+import { DropdownInput } from './DropdownInput';
 
 interface NewMemberModalProps {
   visible: boolean;
@@ -22,21 +23,63 @@ interface NewMemberModalProps {
   onUpdate?: (id: string, updatedData: Partial<ClubMember>) => Promise<void>;
 }
 
-const DOMAIN_OPTIONS = ['Technical', 'Creatives', 'Corporate', 'None'];
-const ROLE_SUGGESTIONS = [
-  'President',
-  'Vice President',
-  'Secretary',
-  'Joint Secretary',
-  'Tech Head',
-  'Tech Lead',
-  'Creative Head',
-  'Creative Lead',
-  'Corporate Head',
-  'Corporate Lead',
-  'Member',
+const BRANCH_OPTIONS = [
+  'CSE Core',
+  'CSE AIML',
+  'CSE Data Science',
+  'CSE Cyber Security',
+  'CSE Software Engineering',
+  'CSE Cloud Computing',
+  'Information Technology (IT)',
+  'ECE',
+  'EEE',
+  'Mechanical Engineering',
+  'Biotechnology',
 ];
-const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+
+const DEPARTMENT_OPTIONS = [
+  { label: 'Computing Technologies (C.Tech)', value: 'C.Tech', hint: 'School of Computing' },
+  { label: 'Networking & Communications (NWC)', value: 'NWC', hint: 'School of Computing' },
+  { label: 'Computational Intelligence (CINTEL)', value: 'CINTEL', hint: 'School of Computing' },
+  { label: 'Data Science & Business Systems (DSBS)', value: 'DSBS', hint: 'School of Computing' },
+  { label: 'Software Engineering (SWE)', value: 'SWE', hint: 'School of Computing' },
+  { label: 'Electronics & Communication (ECE)', value: 'ECE', hint: 'Engineering' },
+  { label: 'Electrical & Electronics (EEE)', value: 'EEE', hint: 'Engineering' },
+  { label: 'Mechanical Engineering', value: 'Mechanical', hint: 'Engineering' },
+];
+
+const YEAR_OPTIONS = [
+  { label: '3rd Year (RA24 Batch)', value: '3rd Year', hint: 'Graduating 2028' },
+  { label: '2nd Year (RA25 Batch)', value: '2nd Year', hint: 'Graduating 2029' },
+  { label: '1st Year (RA26 Batch)', value: '1st Year', hint: 'Graduating 2030' },
+  { label: '4th Year (RA23 Batch)', value: '4th Year', hint: 'Graduating 2027' },
+];
+
+const SECTION_OPTIONS = [
+  'G1', 'G2', 'F1', 'F2', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'
+];
+
+const ROLE_OPTIONS = [
+  { label: 'President', value: 'President', hint: 'Core Executive' },
+  { label: 'Vice President', value: 'Vice President', hint: 'Core Executive' },
+  { label: 'Secretary', value: 'Secretary', hint: 'Core Executive' },
+  { label: 'Joint Secretary', value: 'Joint Secretary', hint: 'Core Executive' },
+  { label: 'Technical Head', value: 'Technical Head', hint: 'Technical Domain' },
+  { label: 'Technical Lead', value: 'Technical Lead', hint: 'Technical Domain' },
+  { label: 'Creatives Head', value: 'Creatives Head', hint: 'Creatives Domain' },
+  { label: 'Creatives Lead', value: 'Creatives Lead', hint: 'Creatives Domain' },
+  { label: 'Corporate Head', value: 'Corporate Head', hint: 'Corporate Domain' },
+  { label: 'Corporate Lead', value: 'Corporate Lead', hint: 'Corporate Domain' },
+  { label: 'Crew Member', value: 'Member', hint: 'Domain Member' },
+];
+
+const DOMAIN_OPTIONS = [
+  { label: 'Technical', value: 'Technical', hint: 'Coding, Web, App, AI/ML' },
+  { label: 'Creatives', value: 'Creatives', hint: 'Design, UI/UX, Video, Content' },
+  { label: 'Corporate', value: 'Corporate', hint: 'Sponsorships, PR, Operations' },
+  { label: 'None (President / VP / Core)', value: 'None', hint: 'Executive Leadership' },
+];
+
 const AVATAR_COLORS = [
   '#05C770',
   '#04B264',
@@ -73,6 +116,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
   const [role, setRole] = useState('Member');
   const [phone, setPhone] = useState('');
 
+  const [autoYearNotice, setAutoYearNotice] = useState<string | null>(null);
   const [isPasteBoxOpen, setIsPasteBoxOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
 
@@ -95,6 +139,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setDomain(initialMember.domain || 'Technical');
       setRole(initialMember.role || 'Member');
       setPhone(initialMember.phone || '');
+      setAutoYearNotice(null);
     } else {
       // Clear form when opening empty modal
       setName('');
@@ -112,23 +157,40 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setDomain('Technical');
       setRole('Member');
       setPhone('');
+      setAutoYearNotice(null);
       setIsPasteBoxOpen(false);
       setPasteText('');
       setErrors({});
     }
   }, [initialMember, visible]);
 
+  // When RA number is changed: automatically detect year (RA24 -> 3rd, RA25 -> 2nd, RA26 -> 1st, RA23 -> 4th)
+  const handleRaNoChange = (val: string) => {
+    setRaNo(val);
+    const detected = getYearFromRaNo(val);
+    if (detected) {
+      setYear(detected);
+      setAutoYearNotice(`Auto-set to ${detected}`);
+      setTimeout(() => setAutoYearNotice(null), 3000);
+    }
+  };
+
   // Handle parsing pasted multi-line block to auto-populate fields
   const handleApplyPastedText = () => {
     if (!pasteText.trim()) return;
     const parsed = parseKeyValueText(pasteText);
     if (parsed.name) setName(parsed.name);
-    if (parsed.raNo) setRaNo(parsed.raNo);
+    if (parsed.raNo) {
+      setRaNo(parsed.raNo);
+      const detectedYear = getYearFromRaNo(parsed.raNo);
+      if (detectedYear) setYear(parsed.year || detectedYear);
+    } else if (parsed.year) {
+      setYear(parsed.year);
+    }
     if (parsed.srmEmail) setSrmEmail(parsed.srmEmail);
     if (parsed.personalEmail) setPersonalEmail(parsed.personalEmail);
     if (parsed.branch) setBranch(parsed.branch);
     if (parsed.department) setDepartment(parsed.department);
-    if (parsed.year) setYear(parsed.year);
     if (parsed.section) setSection(parsed.section);
     if (parsed.faName) setFaName(parsed.faName);
     if (parsed.faEmail) setFaEmail(parsed.faEmail);
@@ -140,6 +202,21 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 
     setIsPasteBoxOpen(false);
     setPasteText('');
+  };
+
+  // Handle role selection with smart domain sync
+  const handleRoleSelect = (selectedRole: string) => {
+    setRole(selectedRole);
+    const lower = selectedRole.toLowerCase();
+    if (lower.includes('president') || lower.includes('secretary')) {
+      setDomain('None');
+    } else if (lower.includes('tech')) {
+      setDomain('Technical');
+    } else if (lower.includes('creative')) {
+      setDomain('Creatives');
+    } else if (lower.includes('corporate')) {
+      setDomain('Corporate');
+    }
   };
 
   const validate = () => {
@@ -202,9 +279,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 {initialMember ? 'Edit Member Details' : 'Add New Member'}
               </Text>
               <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                {initialMember
-                  ? `Update info for ${initialMember.name}`
-                  : 'Add a new member to the HRCC directory'}
+                Select from dropdowns or type manually to customize any detail
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -218,8 +293,8 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               style={[
                 styles.pasteToggleBtn,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
-                  borderColor: isDark ? '#334155' : '#C7D2FE',
+                  backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
+                  borderColor: isDark ? 'rgba(5, 199, 112, 0.3)' : '#A7F3D0',
                 },
               ]}
               onPress={() => setIsPasteBoxOpen(!isPasteBoxOpen)}
@@ -228,9 +303,9 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               <Ionicons
                 name={isPasteBoxOpen ? 'chevron-up-circle' : 'flash'}
                 size={14}
-                color={colors.primary}
+                color={colors.brandGreen}
               />
-              <Text style={[styles.pasteToggleText, { color: colors.primary }]}>
+              <Text style={[styles.pasteToggleText, { color: isDark ? colors.brandGreen : colors.primary }]}>
                 {isPasteBoxOpen
                   ? 'Hide Text Auto-Fill Box'
                   : '⚡ Paste Details Text to Auto-Fill'}
@@ -243,13 +318,13 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               style={[
                 styles.pasteBoxContainer,
                 {
-                  backgroundColor: isDark ? '#111827' : '#F8FAFC',
+                  backgroundColor: isDark ? '#0A0E0C' : '#F8FAFC',
                   borderColor: colors.cardBorder,
                 },
               ]}
             >
               <Text style={[styles.pasteBoxHint, { color: colors.textSecondary }]}>
-                Paste key-value text lines (e.g. Name: ..., Reg.No: ..., Branch: ..., FA: ...):
+                Paste key-value text lines (Name: ..., Reg.No: ..., Branch: ...):
               </Text>
               <TextInput
                 style={[
@@ -260,7 +335,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                     color: colors.text,
                   },
                 ]}
-                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE\nDomain: Technical\nRole: Lead`}
+                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE Core\nDomain: Technical\nRole: Lead`}
                 placeholderTextColor={colors.textMuted}
                 value={pasteText}
                 onChangeText={setPasteText}
@@ -269,13 +344,21 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.applyPasteBtn,
+                  { backgroundColor: colors.brandGreen },
                   !pasteText.trim() && styles.applyPasteBtnDisabled,
                 ]}
                 onPress={handleApplyPastedText}
                 disabled={!pasteText.trim()}
               >
-                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-                <Text style={styles.applyPasteBtnText}>Apply & Auto-Fill Form Fields</Text>
+                <Ionicons name="sparkles" size={14} color={isDark ? '#070707' : '#FFFFFF'} />
+                <Text
+                  style={[
+                    styles.applyPasteBtnText,
+                    { color: isDark ? '#070707' : '#FFFFFF' },
+                  ]}
+                >
+                  Apply & Auto-Fill Form Fields
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -287,363 +370,249 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 <Text style={[styles.label, { color: colors.text }]}>
                   Full Name <Text style={styles.required}>*</Text>
                 </Text>
-                <TextInput
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
+                      borderColor: errors.name ? colors.danger : colors.inputBorder,
                     },
-                    errors.name && styles.inputError,
                   ]}
-                  placeholder="e.g. Purva Gupta"
-                  value={name}
-                  onChangeText={setName}
-                  placeholderTextColor={colors.textMuted}
-                />
-                {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="e.g. Purva Jain"
+                    value={name}
+                    onChangeText={setName}
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+                {errors.name ? <Text style={[styles.errorText, { color: colors.danger }]}>{errors.name}</Text> : null}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Reg. No / RA No</Text>
-                <TextInput
+                <View style={styles.labelRow}>
+                  <Text style={[styles.label, { color: colors.text }]}>Reg. No / RA No</Text>
+                  {autoYearNotice && (
+                    <Text style={[styles.autoNoticeText, { color: colors.brandGreen }]}>
+                      ⚡ {autoYearNotice}
+                    </Text>
+                  )}
+                </View>
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     },
                   ]}
-                  placeholder="e.g. RA2411003010123"
-                  value={raNo}
-                  onChangeText={setRaNo}
-                  autoCapitalize="characters"
-                  placeholderTextColor={colors.textMuted}
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="e.g. RA2411003010123"
+                    value={raNo}
+                    onChangeText={handleRaNoChange}
+                    autoCapitalize="characters"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* 2. Branch & Department with Dropdown & Manual Input */}
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <DropdownInput
+                  label="Pursuing Branch"
+                  value={branch}
+                  onChangeText={setBranch}
+                  options={BRANCH_OPTIONS}
+                  placeholder="e.g. CSE Core, AIML"
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <DropdownInput
+                  label="Department"
+                  value={department}
+                  onChangeText={setDepartment}
+                  options={DEPARTMENT_OPTIONS}
+                  placeholder="e.g. C.Tech, NWC"
                 />
               </View>
             </View>
 
-            {/* 2. Emails */}
+            {/* 3. Year of Study & Section with Dropdown & Manual Input */}
+            <View style={styles.row}>
+              <View style={{ flex: 1.2 }}>
+                <DropdownInput
+                  label="Year of Study"
+                  value={year}
+                  onChangeText={setYear}
+                  options={YEAR_OPTIONS}
+                  placeholder="e.g. 3rd Year"
+                  helperText={
+                    raNo ? `(RA24=3rd, RA25=2nd, RA26=1st)` : undefined
+                  }
+                />
+              </View>
+
+              <View style={{ flex: 0.8 }}>
+                <DropdownInput
+                  label="Section"
+                  value={section}
+                  onChangeText={(val) => setSection(val.toUpperCase())}
+                  options={SECTION_OPTIONS}
+                  placeholder="e.g. G1, F2"
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            {/* 4. Club Role & Domain with Dropdown & Manual Input */}
+            <View style={styles.row}>
+              <View style={{ flex: 1.2 }}>
+                <DropdownInput
+                  label="Club Role / Designation"
+                  value={role}
+                  onChangeText={setRole}
+                  onSelectOption={handleRoleSelect}
+                  options={ROLE_OPTIONS}
+                  placeholder="e.g. Technical Head"
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <DropdownInput
+                  label="Club Domain"
+                  required
+                  value={domain}
+                  onChangeText={setDomain}
+                  options={DOMAIN_OPTIONS}
+                  placeholder="Technical, Creatives..."
+                  error={errors.domain}
+                />
+              </View>
+            </View>
+
+            {/* 5. Emails */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>SRM Email ID</Text>
-                <TextInput
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     },
                   ]}
-                  placeholder="ab1234@srmist.edu.in"
-                  value={srmEmail}
-                  onChangeText={setSrmEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor={colors.textMuted}
-                />
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="pj1234@srmist.edu.in"
+                    value={srmEmail}
+                    onChangeText={setSrmEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>Personal Email</Text>
-                <TextInput
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     },
                   ]}
-                  placeholder="john@gmail.com"
-                  value={personalEmail}
-                  onChangeText={setPersonalEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-            </View>
-
-            {/* 3. Branch & Department */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Pursuing Branch</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    },
-                  ]}
-                  placeholder="e.g. CSE Core, DS, AIML"
-                  value={branch}
-                  onChangeText={setBranch}
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Department</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    },
-                  ]}
-                  placeholder="e.g. C.Tech, NWC, SWE"
-                  value={department}
-                  onChangeText={setDepartment}
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-            </View>
-
-            {/* 4. Year & Section */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1.2 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Year of Study</Text>
-                <View style={styles.chipsRow}>
-                  {YEAR_OPTIONS.map((y) => (
-                    <TouchableOpacity
-                      key={y}
-                      style={[
-                        styles.miniChip,
-                        {
-                          backgroundColor:
-                            year === y
-                              ? colors.primary
-                              : isDark
-                              ? '#1E293B'
-                              : '#F1F5F9',
-                          borderColor:
-                            year === y ? colors.primary : colors.cardBorder,
-                        },
-                      ]}
-                      onPress={() => setYear(y)}
-                    >
-                      <Text
-                        style={[
-                          styles.miniChipText,
-                          {
-                            color: year === y ? '#FFFFFF' : colors.textSecondary,
-                            fontWeight: year === y ? '700' : '500',
-                          },
-                        ]}
-                      >
-                        {y}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="purva@gmail.com"
+                    value={personalEmail}
+                    onChangeText={setPersonalEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.textMuted}
+                  />
                 </View>
               </View>
-
-              <View style={[styles.inputGroup, { flex: 0.8 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Section</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.text,
-                    },
-                  ]}
-                  placeholder="e.g. G1, F2"
-                  value={section}
-                  onChangeText={setSection}
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
             </View>
 
-            {/* 5. LinkedIn & GitHub */}
+            {/* 6. LinkedIn & GitHub */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>LinkedIn Profile / Handle</Text>
-                <TextInput
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     },
                   ]}
-                  placeholder="linkedin.com/in/username"
-                  value={linkedin}
-                  onChangeText={setLinkedin}
-                  autoCapitalize="none"
-                  placeholderTextColor={colors.textMuted}
-                />
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="linkedin.com/in/username"
+                    value={linkedin}
+                    onChangeText={setLinkedin}
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>GitHub Profile / Handle</Text>
-                <TextInput
+                <View
                   style={[
-                    styles.input,
+                    styles.textInputWrapper,
                     {
                       backgroundColor: colors.inputBg,
                       borderColor: colors.inputBorder,
-                      color: colors.text,
                     },
                   ]}
-                  placeholder="github.com/username"
-                  value={github}
-                  onChangeText={setGithub}
-                  autoCapitalize="none"
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="github.com/username"
+                    value={github}
+                    onChangeText={setGithub}
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* 7. Phone Number */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Phone Number (Optional)</Text>
+              <View
+                style={[
+                  styles.textInputWrapper,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                  },
+                ]}
+              >
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="+91 98765 43210"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
                   placeholderTextColor={colors.textMuted}
                 />
               </View>
-            </View>
-
-            {/* 6. Club Role & Domain */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Club Role / Designation</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  },
-                ]}
-                placeholder="e.g. Tech Head, Vice President, Lead, Member"
-                value={role}
-                onChangeText={(val) => {
-                  setRole(val);
-                  const lower = val.toLowerCase();
-                  if (lower.includes('president') || lower.includes('secretary')) {
-                    setDomain('None');
-                  } else if (lower.includes('tech')) {
-                    setDomain('Technical');
-                  } else if (lower.includes('creative')) {
-                    setDomain('Creatives');
-                  } else if (lower.includes('corporate')) {
-                    setDomain('Corporate');
-                  }
-                }}
-                placeholderTextColor={colors.textMuted}
-              />
-              <View style={[styles.chipsRow, { marginTop: 6 }]}>
-                {ROLE_SUGGESTIONS.map((r) => (
-                  <TouchableOpacity
-                    key={r}
-                    style={[
-                      styles.miniChip,
-                      {
-                        backgroundColor:
-                          role === r
-                            ? colors.primary
-                            : isDark
-                            ? '#1E293B'
-                            : '#F1F5F9',
-                        borderColor:
-                          role === r ? colors.primary : colors.cardBorder,
-                      },
-                    ]}
-                    onPress={() => {
-                      setRole(r);
-                      if (
-                        r === 'President' ||
-                        r === 'Vice President' ||
-                        r === 'Secretary' ||
-                        r === 'Joint Secretary'
-                      ) {
-                        setDomain('None');
-                      } else if (r.startsWith('Tech')) {
-                        setDomain('Technical');
-                      } else if (r.startsWith('Creative')) {
-                        setDomain('Creatives');
-                      } else if (r.startsWith('Corporate')) {
-                        setDomain('Corporate');
-                      }
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.miniChipText,
-                        {
-                          color: role === r ? '#FFFFFF' : colors.textSecondary,
-                          fontWeight: role === r ? '700' : '500',
-                        },
-                      ]}
-                    >
-                      {r}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Domain Selector */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>
-                Club Domain {domain === 'None' && '(Not Applicable for President / VP / Core)'}
-              </Text>
-              <View style={styles.chipsRow}>
-                {DOMAIN_OPTIONS.map((d) => (
-                  <TouchableOpacity
-                    key={d}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor:
-                          domain === d
-                            ? colors.primary
-                            : isDark
-                            ? '#1E293B'
-                            : '#F1F5F9',
-                        borderColor:
-                          domain === d ? colors.primary : colors.cardBorder,
-                      },
-                    ]}
-                    onPress={() => setDomain(d)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        {
-                          color: domain === d ? '#FFFFFF' : colors.textSecondary,
-                          fontWeight: domain === d ? '700' : '600',
-                        },
-                      ]}
-                    >
-                      {d === 'None' ? 'None (President / VP)' : d}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Phone */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Phone Number (Optional)</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.inputBorder,
-                    color: colors.text,
-                  },
-                ]}
-                placeholder="+91 98765 43210"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                placeholderTextColor={colors.textMuted}
-              />
             </View>
           </ScrollView>
 
@@ -653,7 +622,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               style={[
                 styles.cancelBtn,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                  backgroundColor: isDark ? '#161E19' : '#F1F5F9',
                 },
               ]}
               onPress={onClose}
@@ -688,12 +657,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 14,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 600,
-    maxHeight: '92%',
+    maxWidth: 620,
+    maxHeight: '94%',
     borderRadius: 16,
     padding: 18,
     borderWidth: 1,
@@ -715,7 +684,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   modalSubtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     marginTop: 2,
   },
   closeBtn: {
@@ -755,8 +724,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     fontSize: 11.5,
-    minHeight: 90,
-    maxHeight: 160,
+    minHeight: 85,
+    maxHeight: 150,
     textAlignVertical: 'top',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     marginBottom: 8,
@@ -766,7 +735,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#059669',
     paddingVertical: 7,
     borderRadius: 6,
   },
@@ -775,64 +743,50 @@ const styles = StyleSheet.create({
   },
   applyPasteBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
   },
   formScroll: {
     marginTop: 8,
   },
   inputGroup: {
-    marginBottom: 10,
+    marginBottom: 11,
   },
   row: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 5,
   },
+  autoNoticeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
   required: {
     color: '#EF4444',
   },
-  input: {
+  textInputWrapper: {
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
-    fontSize: 13,
+    height: 38,
+    justifyContent: 'center',
   },
-  inputError: {
-    borderColor: '#EF4444',
+  input: {
+    fontSize: 13,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
   },
   errorText: {
     fontSize: 11,
-    color: '#EF4444',
     marginTop: 2,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: 12,
-  },
-  miniChip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  miniChipText: {
-    fontSize: 11,
   },
   modalActions: {
     flexDirection: 'row',
@@ -860,8 +814,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   submitText: {
-    color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
   },
 });

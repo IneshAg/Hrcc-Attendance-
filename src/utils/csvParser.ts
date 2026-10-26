@@ -21,6 +21,27 @@ export interface ParsedMemberRow {
 }
 
 /**
+ * Automatically determine college year of study based on SRM Registration Number prefix:
+ * RA24 -> 3rd Year
+ * RA25 -> 2nd Year
+ * RA26 -> 1st Year
+ * RA23 -> 4th Year
+ */
+export const getYearFromRaNo = (raNo?: string): string | null => {
+  if (!raNo) return null;
+  const clean = raNo.toUpperCase().trim();
+  const match = clean.match(/(?:RA)?(2[3-6])/);
+  if (match) {
+    const batchYear = match[1];
+    if (batchYear === '24') return '3rd Year';
+    if (batchYear === '25') return '2nd Year';
+    if (batchYear === '26') return '1st Year';
+    if (batchYear === '23') return '4th Year';
+  }
+  return null;
+};
+
+/**
  * Parses a single block of Key: Value text (e.g. copied from WhatsApp, forms, or messages)
  */
 export const parseKeyValueText = (rawText: string): Partial<ClubMember> => {
@@ -75,6 +96,12 @@ export const parseKeyValueText = (rawText: string): Partial<ClubMember> => {
       if (val.includes('@srmist')) result.srmEmail = val;
       else result.personalEmail = val;
     }
+  }
+
+  // Auto-detect year from registration number if not explicitly specified
+  if (result.raNo && !result.year) {
+    const autoYear = getYearFromRaNo(result.raNo);
+    if (autoYear) result.year = autoYear;
   }
 
   // Automatic domain mapping if role was extracted
@@ -335,7 +362,7 @@ export const parseBulkMembersText = (
       personalEmail: personalEmail.trim() || existing?.personalEmail || '',
       branch: branch.trim() || existing?.branch || '',
       department: department.trim() || existing?.department || '',
-      year: year.trim() || existing?.year || '',
+      year: year.trim() || existing?.year || getYearFromRaNo(raNo) || '',
       section: section.trim() || existing?.section || '',
       faName: faName.trim() || existing?.faName || '',
       faEmail: faEmail.trim() || existing?.faEmail || '',
