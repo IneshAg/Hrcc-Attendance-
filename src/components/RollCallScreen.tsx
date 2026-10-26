@@ -46,7 +46,14 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
+  // By default show 'unmarked' first as requested so roll call is fast and effortless
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>(() => {
+    const initialMarkedCount = Object.keys(initialAttendance?.statuses || {}).length;
+    if (members.length > 0 && initialMarkedCount >= members.length) {
+      return 'all';
+    }
+    return 'unmarked';
+  });
 
   // Member note modal state
   const [editingNoteMember, setEditingNoteMember] = useState<ClubMember | null>(null);
@@ -154,6 +161,19 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
       if (selectedFilter === 'unmarked') return !status;
       return status === selectedFilter;
     });
+
+    // When viewing 'all', keep unmarked members at the very top for convenience, then hierarchy
+    if (selectedFilter === 'all') {
+      return [...list].sort((a, b) => {
+        const aMarked = Boolean(attendance.statuses[a.id]);
+        const bMarked = Boolean(attendance.statuses[b.id]);
+        if (aMarked !== bMarked) return aMarked ? 1 : -1;
+        const rankA = getRoleBadgeConfig(a.role, a.domain).rank;
+        const rankB = getRoleBadgeConfig(b.role, b.domain).rank;
+        if (rankA !== rankB) return rankA - rankB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+    }
 
     return sortMembersByHierarchy(list);
   }, [members, searchQuery, selectedFilter, attendance.statuses]);
@@ -438,23 +458,23 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           ) : null}
         </View>
 
-        {/* Filter Pills */}
+        {/* Filter Pills (Unmarked first by default) */}
         <View style={styles.filterPillsRow}>
-          <TouchableOpacity
-            style={[styles.filterPill, selectedFilter === 'all' && styles.filterPillActive]}
-            onPress={() => setSelectedFilter('all')}
-          >
-            <Text style={[styles.filterPillText, selectedFilter === 'all' && styles.filterPillTextActive]}>
-              All ({members.length})
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.filterPill, selectedFilter === 'unmarked' && styles.filterPillActive]}
             onPress={() => setSelectedFilter('unmarked')}
           >
             <Text style={[styles.filterPillText, selectedFilter === 'unmarked' && styles.filterPillTextActive]}>
               Unmarked ({summary.unmarked})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterPill, selectedFilter === 'all' && styles.filterPillActive]}
+            onPress={() => setSelectedFilter('all')}
+          >
+            <Text style={[styles.filterPillText, selectedFilter === 'all' && styles.filterPillTextActive]}>
+              All ({members.length})
             </Text>
           </TouchableOpacity>
 
@@ -481,14 +501,43 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
         <FlatList
           data={filteredMembers}
           keyExtractor={(item) => item.id}
+          extraData={attendance}
           renderItem={renderMemberRow}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="person-remove-outline" size={36} color="#CBD5E1" />
-              <Text style={styles.emptyText}>No members match your filter</Text>
-            </View>
+            selectedFilter === 'unmarked' && !searchQuery ? (
+              <View style={styles.allDoneCard}>
+                <View style={styles.allDoneIconCircle}>
+                  <Ionicons name="checkmark-done-circle" size={44} color="#10B981" />
+                </View>
+                <Text style={styles.allDoneTitle}>All Members Marked!</Text>
+                <Text style={styles.allDoneSubtitle}>
+                  Roll call complete: {summary.present} Present, {summary.absent} Absent ({summary.percentage}% Turnout).
+                </Text>
+                <View style={styles.allDoneActionsRow}>
+                  <TouchableOpacity
+                    style={styles.allDoneBtnAll}
+                    onPress={() => setSelectedFilter('all')}
+                  >
+                    <Ionicons name="list" size={15} color="#4F46E5" />
+                    <Text style={styles.allDoneBtnTextAll}>Review All ({members.length})</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.allDoneBtnShare}
+                    onPress={() => onOpenShare(meeting, attendance)}
+                  >
+                    <Ionicons name="share-social-outline" size={15} color="#059669" />
+                    <Text style={styles.allDoneBtnTextShare}>Share Attendance</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="person-remove-outline" size={36} color="#CBD5E1" />
+                <Text style={styles.emptyText}>No members match this filter</Text>
+              </View>
+            )
           }
         />
       </View>
@@ -949,6 +998,77 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
     fontWeight: '500',
+  },
+  allDoneCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 24,
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  allDoneIconCircle: {
+    marginBottom: 10,
+  },
+  allDoneTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  allDoneSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 380,
+    marginBottom: 16,
+  },
+  allDoneActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  allDoneBtnAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF2FF',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  allDoneBtnTextAll: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4F46E5',
+  },
+  allDoneBtnShare: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  allDoneBtnTextShare: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669',
   },
   // Modal styles
   modalOverlay: {
