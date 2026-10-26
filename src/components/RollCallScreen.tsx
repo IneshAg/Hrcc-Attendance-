@@ -444,7 +444,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           <Text style={[styles.meetingHeaderTitle, { color: colors.text }]} numberOfLines={1}>
             {meeting.title}
           </Text>
-          <Text style={[styles.meetingHeaderSubtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.meetingHeaderSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
             {meeting.date} • {meeting.location}
           </Text>
         </View>
@@ -611,137 +611,140 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
         </View>
 
         {/* Filter Chips (Horizontal Scrollable) */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterPillsScroll}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor:
-                  selectedFilter === 'unmarked'
-                    ? colors.brandGreen
-                    : isDark
-                    ? '#161E19'
-                    : '#F1F5F9',
-                borderColor:
-                  selectedFilter === 'unmarked' ? colors.brandGreen : colors.cardBorder,
-              },
-            ]}
-            onPress={() => setSelectedFilter('unmarked')}
+        <View style={styles.filterSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScrollView}
+            contentContainerStyle={styles.filterPillsScroll}
           >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.filterPillText,
+                styles.filterPill,
                 {
-                  color:
+                  backgroundColor:
                     selectedFilter === 'unmarked'
-                      ? (isDark ? '#070707' : '#FFFFFF')
-                      : colors.textSecondary,
-                  fontWeight: selectedFilter === 'unmarked' ? '800' : '600',
+                      ? colors.brandGreen
+                      : isDark
+                      ? '#161E19'
+                      : '#F1F5F9',
+                  borderColor:
+                    selectedFilter === 'unmarked' ? colors.brandGreen : colors.cardBorder,
                 },
               ]}
+              onPress={() => setSelectedFilter('unmarked')}
             >
-              Unmarked ({summary.unmarked})
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterPillText,
+                  {
+                    color:
+                      selectedFilter === 'unmarked'
+                        ? (isDark ? '#070707' : '#FFFFFF')
+                        : colors.textSecondary,
+                    fontWeight: selectedFilter === 'unmarked' ? '800' : '600',
+                  },
+                ]}
+              >
+                Unmarked ({summary.unmarked})
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor:
-                  selectedFilter === 'all'
-                    ? colors.brandGreen
-                    : isDark
-                    ? '#161E19'
-                    : '#F1F5F9',
-                borderColor:
-                  selectedFilter === 'all' ? colors.brandGreen : colors.cardBorder,
-              },
-            ]}
-            onPress={() => setSelectedFilter('all')}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.filterPillText,
+                styles.filterPill,
                 {
-                  color:
+                  backgroundColor:
                     selectedFilter === 'all'
-                      ? (isDark ? '#070707' : '#FFFFFF')
-                      : colors.textSecondary,
-                  fontWeight: selectedFilter === 'all' ? '800' : '600',
+                      ? colors.brandGreen
+                      : isDark
+                      ? '#161E19'
+                      : '#F1F5F9',
+                  borderColor:
+                    selectedFilter === 'all' ? colors.brandGreen : colors.cardBorder,
                 },
               ]}
+              onPress={() => setSelectedFilter('all')}
             >
-              All ({members.length})
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterPillText,
+                  {
+                    color:
+                      selectedFilter === 'all'
+                        ? (isDark ? '#070707' : '#FFFFFF')
+                        : colors.textSecondary,
+                    fontWeight: selectedFilter === 'all' ? '800' : '600',
+                  },
+                ]}
+              >
+                All ({members.length})
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor:
-                  selectedFilter === 'present'
-                    ? colors.brandGreen
-                    : isDark
-                    ? '#161E19'
-                    : '#F1F5F9',
-                borderColor:
-                  selectedFilter === 'present' ? colors.brandGreen : colors.cardBorder,
-              },
-            ]}
-            onPress={() => setSelectedFilter('present')}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.filterPillText,
+                styles.filterPill,
                 {
-                  color:
+                  backgroundColor:
                     selectedFilter === 'present'
-                      ? (isDark ? '#070707' : '#FFFFFF')
-                      : colors.textSecondary,
-                  fontWeight: selectedFilter === 'present' ? '800' : '600',
+                      ? colors.brandGreen
+                      : isDark
+                      ? '#161E19'
+                      : '#F1F5F9',
+                  borderColor:
+                    selectedFilter === 'present' ? colors.brandGreen : colors.cardBorder,
                 },
               ]}
+              onPress={() => setSelectedFilter('present')}
             >
-              Present ({summary.present})
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterPillText,
+                  {
+                    color:
+                      selectedFilter === 'present'
+                        ? (isDark ? '#070707' : '#FFFFFF')
+                        : colors.textSecondary,
+                    fontWeight: selectedFilter === 'present' ? '800' : '600',
+                  },
+                ]}
+              >
+                Present ({summary.present})
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.filterPill,
-              {
-                backgroundColor:
-                  selectedFilter === 'absent'
-                    ? colors.danger
-                    : isDark
-                    ? '#161E19'
-                    : '#F1F5F9',
-                borderColor:
-                  selectedFilter === 'absent' ? colors.danger : colors.cardBorder,
-              },
-            ]}
-            onPress={() => setSelectedFilter('absent')}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.filterPillText,
+                styles.filterPill,
                 {
-                  color:
-                    selectedFilter === 'absent' ? '#FFFFFF' : colors.textSecondary,
-                  fontWeight: selectedFilter === 'absent' ? '800' : '600',
+                  backgroundColor:
+                    selectedFilter === 'absent'
+                      ? colors.danger
+                      : isDark
+                      ? '#161E19'
+                      : '#F1F5F9',
+                  borderColor:
+                    selectedFilter === 'absent' ? colors.danger : colors.cardBorder,
                 },
               ]}
+              onPress={() => setSelectedFilter('absent')}
             >
-              Absent ({summary.absent})
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+              <Text
+                style={[
+                  styles.filterPillText,
+                  {
+                    color:
+                      selectedFilter === 'absent' ? '#FFFFFF' : colors.textSecondary,
+                    fontWeight: selectedFilter === 'absent' ? '800' : '600',
+                  },
+                ]}
+              >
+                Absent ({summary.absent})
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
 
         {/* Member Roll Call List */}
         <FlatList
@@ -749,6 +752,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           keyExtractor={(item) => item.id}
           extraData={attendance}
           renderItem={renderMemberRow}
+          style={styles.list}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
@@ -911,6 +915,7 @@ const styles = StyleSheet.create({
   topMeetingInfo: {
     flex: 1,
     marginHorizontal: 8,
+    minWidth: 0,
   },
   meetingHeaderTitle: {
     fontSize: 15,
@@ -947,6 +952,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
+    flexShrink: 0,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -985,6 +991,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 10,
+    flexShrink: 0,
   },
   bulkBtn: {
     flex: 1,
@@ -1009,28 +1016,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     height: 38,
+    flexShrink: 0,
   },
   searchInput: {
     flex: 1,
     fontSize: 13,
     paddingVertical: 6,
   },
+  filterSection: {
+    marginBottom: 10,
+    flexShrink: 0,
+  },
+  filterScrollView: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   filterPillsScroll: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
-    paddingBottom: 10,
+    paddingVertical: 2,
   },
   filterPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterPillText: {
     fontSize: 12,
   },
+  list: {
+    flex: 1,
+  },
   listContent: {
-    paddingBottom: 40,
+    paddingBottom: 80,
   },
   memberCard: {
     borderRadius: 12,
