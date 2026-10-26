@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Meeting } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface NewMeetingModalProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface NewMeetingModalProps {
 }
 
 export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClose, onSubmit }) => {
+  const { isDark, colors } = useTheme();
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [title, setTitle] = useState('');
@@ -63,31 +65,49 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
           {/* Header */}
-          <View style={styles.modalHeader}>
-            <View>
-              <Text style={styles.modalTitle}>Schedule New Meeting</Text>
-              <Text style={styles.modalSubtitle}>Create meeting session for taking roll call</Text>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Schedule New Meeting</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                Create meeting session for taking roll call
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
             {/* Title */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
+              <Text style={[styles.label, { color: colors.text }]}>
                 Meeting Title <Text style={styles.required}>*</Text>
               </Text>
               <TextInput
-                style={[styles.input, errors.title && styles.inputError]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                  errors.title && styles.inputError,
+                ]}
                 placeholder="e.g. Weekly All-Hands Sync or Domain Review"
                 value={title}
                 onChangeText={setTitle}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
               />
               {errors.title ? <Text style={styles.errorText}>{errors.title}</Text> : null}
             </View>
@@ -95,29 +115,45 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
             {/* Date & Time */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
+                <Text style={[styles.label, { color: colors.text }]}>
                   Date (YYYY-MM-DD) <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={[styles.input, errors.date && styles.inputError]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                    errors.date && styles.inputError,
+                  ]}
                   placeholder="2026-10-26"
                   value={date}
                   onChangeText={setDate}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
                 {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
+                <Text style={[styles.label, { color: colors.text }]}>
                   Time <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={[styles.input, errors.time && styles.inputError]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                    errors.time && styles.inputError,
+                  ]}
                   placeholder="e.g. 5:00 PM - 6:30 PM"
                   value={time}
                   onChangeText={setTime}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
                 {errors.time ? <Text style={styles.errorText}>{errors.time}</Text> : null}
               </View>
@@ -125,43 +161,70 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
 
             {/* Location */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                Location / Venue / Online Link <Text style={styles.required}>*</Text>
+              <Text style={[styles.label, { color: colors.text }]}>
+                Location / Venue <Text style={styles.required}>*</Text>
               </Text>
               <TextInput
-                style={[styles.input, errors.location && styles.inputError]}
-                placeholder="e.g. Seminar Hall 302 or Google Meet"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                  errors.location && styles.inputError,
+                ]}
+                placeholder="e.g. Tech Park UB 204 or Online GMeet"
                 value={location}
                 onChangeText={setLocation}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
               />
               {errors.location ? <Text style={styles.errorText}>{errors.location}</Text> : null}
             </View>
 
-            {/* Description / Agenda */}
+            {/* Description */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Agenda / Notes (Optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Meeting Description / Agenda</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Outline discussion points, domain presentations, etc."
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder="Discussing upcoming hackathon tracks, responsibilities, and schedule"
                 value={description}
                 onChangeText={setDescription}
+                placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={3}
-                placeholderTextColor="#94A3B8"
               />
             </View>
           </ScrollView>
 
-          {/* Modal Actions */}
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
+          {/* Footer Actions */}
+          <View style={[styles.modalFooter, { borderTopColor: colors.cardBorder }]}>
+            <TouchableOpacity
+              style={[
+                styles.cancelButton,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                },
+              ]}
+              onPress={onClose}
+            >
+              <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={[styles.submitButton, { backgroundColor: colors.primary }]}
+              onPress={handleSubmit}
+            >
               <Ionicons name="calendar" size={17} color="#FFFFFF" />
-              <Text style={styles.submitText}>Create Meeting</Text>
+              <Text style={styles.submitButtonText}>Create Meeting</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -173,17 +236,17 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 500,
-    backgroundColor: '#FFFFFF',
+    maxWidth: 520,
+    maxHeight: '90%',
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -196,16 +259,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
   },
   modalSubtitle: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
@@ -224,21 +284,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
     marginBottom: 6,
   },
   required: {
     color: '#EF4444',
   },
   input: {
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
-    fontSize: 14,
-    color: '#0F172A',
+    fontSize: 13,
   },
   textArea: {
     minHeight: 70,
@@ -246,45 +302,45 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
   },
   errorText: {
     fontSize: 11,
     color: '#EF4444',
-    marginTop: 4,
+    marginTop: 3,
   },
-  modalActions: {
+  modalFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 10,
     paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     marginTop: 10,
+    borderTopWidth: 1,
   },
-  cancelBtn: {
-    paddingVertical: 10,
+  cancelButton: {
     paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#F1F5F9',
   },
-  cancelText: {
+  cancelButtonText: {
     fontSize: 13,
-    color: '#475569',
     fontWeight: '600',
   },
-  submitBtn: {
+  submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 10,
     paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#4F46E5',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  submitText: {
-    fontSize: 13,
+  submitButtonText: {
     color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
   },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 export type TabKey = 'meetings' | 'members' | 'analytics';
 
@@ -17,6 +18,8 @@ export const TabBar: React.FC<TabBarProps> = ({
   meetingsCount,
   membersCount,
 }) => {
+  const { isDark, colors } = useTheme();
+
   const tabs = [
     {
       key: 'meetings' as TabKey,
@@ -27,14 +30,14 @@ export const TabBar: React.FC<TabBarProps> = ({
     },
     {
       key: 'members' as TabKey,
-      label: 'Club Members',
+      label: 'Members',
       iconActive: 'people' as const,
       iconInactive: 'people-outline' as const,
       badge: membersCount,
     },
     {
       key: 'analytics' as TabKey,
-      label: 'Reports & Stats',
+      label: 'Reports',
       iconActive: 'bar-chart' as const,
       iconInactive: 'bar-chart-outline' as const,
       badge: null,
@@ -42,35 +45,88 @@ export const TabBar: React.FC<TabBarProps> = ({
   ];
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.cardBorder,
+        },
+      ]}
+    >
       <View style={styles.tabBarInner}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <TouchableOpacity
               key={tab.key}
-              style={[styles.tabButton, isActive && styles.activeTabButton]}
+              style={[
+                styles.tabButton,
+                isActive && {
+                  backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                },
+              ]}
               onPress={() => onTabChange(tab.key)}
               activeOpacity={0.7}
             >
-              <View style={styles.iconContainer}>
-                <Ionicons
-                  name={isActive ? tab.iconActive : tab.iconInactive}
-                  size={20}
-                  color={isActive ? '#4F46E5' : '#64748B'}
-                />
-                {tab.badge !== null && (
-                  <View style={[styles.badge, isActive ? styles.badgeActive : styles.badgeInactive]}>
-                    <Text style={[styles.badgeText, isActive ? styles.badgeTextActive : styles.badgeTextInactive]}>
-                      {tab.badge}
-                    </Text>
-                  </View>
-                )}
+              <View style={styles.tabContent}>
+                <View style={styles.iconContainer}>
+                  <Ionicons
+                    name={isActive ? tab.iconActive : tab.iconInactive}
+                    size={19}
+                    color={isActive ? colors.primary : colors.textMuted}
+                  />
+                  {tab.badge !== null && (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: isActive
+                            ? colors.primary
+                            : isDark
+                            ? '#334155'
+                            : '#E2E8F0',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          {
+                            color: isActive
+                              ? '#FFFFFF'
+                              : isDark
+                              ? '#CBD5E1'
+                              : '#475569',
+                          },
+                        ]}
+                      >
+                        {tab.badge}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: isActive ? colors.primary : colors.textMuted },
+                    isActive && styles.activeTabLabel,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {tab.label}
+                </Text>
               </View>
-              <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
-                {tab.label}
-              </Text>
-              {isActive && <View style={styles.activeIndicator} />}
+
+              {isActive && (
+                <View
+                  style={[
+                    styles.activeIndicator,
+                    { backgroundColor: colors.primary },
+                  ]}
+                />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -81,28 +137,29 @@ export const TabBar: React.FC<TabBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   tabBarInner: {
     flexDirection: 'row',
     maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   tabButton: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    paddingVertical: 12,
     position: 'relative',
+    borderRadius: 8,
+    marginVertical: 4,
+    marginHorizontal: 3,
   },
-  activeTabButton: {
-    backgroundColor: '#FAFAFF',
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   iconContainer: {
     flexDirection: 'row',
@@ -110,46 +167,31 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
   },
   activeTabLabel: {
-    color: '#4F46E5',
     fontWeight: '700',
   },
   badge: {
-    marginLeft: 6,
-    paddingHorizontal: 6,
+    marginLeft: 4,
+    paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: 10,
-    minWidth: 18,
+    borderRadius: 8,
+    minWidth: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeActive: {
-    backgroundColor: '#EEF2FF',
-  },
-  badgeInactive: {
-    backgroundColor: '#F1F5F9',
-  },
   badgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
-  },
-  badgeTextActive: {
-    color: '#4F46E5',
-  },
-  badgeTextInactive: {
-    color: '#64748B',
   },
   activeIndicator: {
     position: 'absolute',
-    bottom: 0,
-    left: 12,
-    right: 12,
+    bottom: -4,
+    left: 8,
+    right: 8,
     height: 3,
-    backgroundColor: '#4F46E5',
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
   },

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { Header } from './src/components/Header';
 import { TabBar, TabKey } from './src/components/TabBar';
 import { MeetingCard } from './src/components/MeetingCard';
@@ -46,9 +47,9 @@ import {
   bulkUpsertMembers,
   MemberOverallStats,
 } from './src/storage/storage';
-import { generateMembersListCSV, downloadFile } from './src/utils/exportUtils';
 
-export default function App() {
+function AppContent() {
+  const { isDark, colors } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('meetings');
 
@@ -102,23 +103,23 @@ export default function App() {
       .channel('hrcc_attendance_realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'meeting_attendance' },
-        () => {
-          getAllAttendance().then(setAttendanceRecords);
-        }
-      )
-      .on(
-        'postgres_changes',
         { event: '*', schema: 'public', table: 'club_members' },
         () => {
-          getMembers().then(setMembers);
+          loadData();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'meetings' },
         () => {
-          getMeetings().then(setMeetings);
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance_records' },
+        () => {
+          loadData();
         }
       )
       .subscribe();
@@ -127,20 +128,6 @@ export default function App() {
       supabase.removeChannel(channel);
     };
   }, [loadData]);
-
-  // Export Full Members Roster as CSV
-  const handleExportMembersCSV = async () => {
-    if (members.length === 0) {
-      if (Platform.OS === 'web') {
-        alert('No members to export yet. Add club members first.');
-      } else {
-        Alert.alert('No Members', 'No members to export yet. Add club members first.');
-      }
-      return;
-    }
-    const csv = generateMembersListCSV(members);
-    await downloadFile('club_members_roster.csv', csv, 'text/csv;charset=utf-8;');
-  };
 
   // Bulk Import / Update Members from Text / Excel / CSV
   const handleBulkImport = async (rows: any[]) => {
@@ -266,10 +253,7 @@ export default function App() {
         (m.srmEmail && m.srmEmail.toLowerCase().includes(q)) ||
         (m.personalEmail && m.personalEmail.toLowerCase().includes(q)) ||
         (m.section && m.section.toLowerCase().includes(q)) ||
-        (m.faName && m.faName.toLowerCase().includes(q)) ||
-        (m.faEmail && m.faEmail.toLowerCase().includes(q)) ||
-        (m.linkedin && m.linkedin.toLowerCase().includes(q)) ||
-        (m.github && m.github.toLowerCase().includes(q));
+        (m.phone && m.phone.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
       if (selectedDomain === 'All') return true;
@@ -296,9 +280,11 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={styles.loadingText}>Loading Club Attendance...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Loading HRCC Attendance...
+        </Text>
       </View>
     );
   }
@@ -306,8 +292,8 @@ export default function App() {
   // Active Roll Call screen (Taking attendance for a selected meeting)
   if (activeRollCallMeeting) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <RollCallScreen
           meeting={activeRollCallMeeting}
           members={members}
@@ -329,13 +315,13 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.surface }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Top Header */}
       <Header
         title="HackerRank Campus Crew"
-        subtitle="Attendance & Meeting Roll Call"
+        subtitle="Attendance & Roll Call"
         onNewMeeting={() => setIsNewMeetingVisible(true)}
         onNewMember={() => setIsNewMemberVisible(true)}
         activeTab={activeTab}
@@ -350,7 +336,7 @@ export default function App() {
       />
 
       {/* Main Screen Content */}
-      <View style={styles.mainContainer}>
+      <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
         {/* 1. MEETINGS TAB */}
         {activeTab === 'meetings' && (
           <FlatList
@@ -370,20 +356,20 @@ export default function App() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <View style={styles.tabHeader}>
-                <View>
-                  <Text style={styles.tabSectionTitle}>Club Meetings & Roll Call</Text>
-                  <Text style={styles.tabSectionSubtitle}>
-                    Select any meeting session to check present/absent members
-                  </Text>
-                </View>
+                <Text style={[styles.tabSectionTitle, { color: colors.text }]}>
+                  Club Meetings & Roll Call
+                </Text>
+                <Text style={[styles.tabSectionSubtitle, { color: colors.textSecondary }]}>
+                  Tap any session below to mark present and absent members
+                </Text>
               </View>
             }
             ListEmptyComponent={
               <View style={styles.emptyState}>
-                <Ionicons name="calendar-outline" size={48} color="#CBD5E1" />
-                <Text style={styles.emptyTitle}>No Meetings Scheduled</Text>
-                <Text style={styles.emptySubtitle}>
-                  Tap "+ New Meeting" above to create your first session.
+                <Ionicons name="calendar-outline" size={44} color={colors.textMuted} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No Meetings Scheduled</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                  Tap "+ New Meeting" to schedule your first club session.
                 </Text>
               </View>
             }
@@ -394,19 +380,27 @@ export default function App() {
         {activeTab === 'members' && (
           <View style={styles.membersTabWrapper}>
             {/* Search Input */}
-            <View style={styles.searchBar}>
-              <Ionicons name="search-outline" size={18} color="#94A3B8" />
+            <View
+              style={[
+                styles.searchBar,
+                {
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.inputBorder,
+                },
+              ]}
+            >
+              <Ionicons name="search-outline" size={17} color={colors.textMuted} />
               <TextInput
-                style={styles.searchInput}
-                placeholder="Search name, Reg.No, SRM email, branch, dept, FA, domain..."
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Search name, Reg.No, branch, domain, role..."
                 value={memberSearchQuery}
                 onChangeText={setMemberSearchQuery}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 clearButtonMode="while-editing"
               />
               {memberSearchQuery ? (
                 <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
-                  <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                  <Ionicons name="close-circle" size={17} color={colors.textMuted} />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -417,13 +411,28 @@ export default function App() {
                 {domainFilters.map((dom) => (
                   <TouchableOpacity
                     key={dom}
-                    style={[styles.domainChip, selectedDomain === dom && styles.domainChipActive]}
+                    style={[
+                      styles.domainChip,
+                      selectedDomain === dom
+                        ? {
+                            backgroundColor: colors.primary,
+                            borderColor: colors.primary,
+                          }
+                        : {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.cardBorder,
+                          },
+                    ]}
                     onPress={() => setSelectedDomain(dom)}
                   >
                     <Text
                       style={[
                         styles.domainChipText,
-                        selectedDomain === dom && styles.domainChipTextActive,
+                        {
+                          color:
+                            selectedDomain === dom ? '#FFFFFF' : colors.textSecondary,
+                          fontWeight: selectedDomain === dom ? '700' : '600',
+                        },
                       ]}
                     >
                       {dom}
@@ -434,22 +443,38 @@ export default function App() {
 
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity
-                  style={styles.importRosterBtn}
+                  style={[
+                    styles.importRosterBtn,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
+                      borderColor: isDark ? '#334155' : '#C7D2FE',
+                    },
+                  ]}
                   onPress={() => setIsBulkImportVisible(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="flash-outline" size={14} color="#4F46E5" />
-                  <Text style={styles.importRosterText}>Import / Update</Text>
+                  <Ionicons name="flash-outline" size={13} color={colors.primary} />
+                  <Text style={[styles.importRosterText, { color: colors.primary }]}>
+                    Import / Update
+                  </Text>
                 </TouchableOpacity>
 
                 {members.length > 0 && (
                   <TouchableOpacity
-                    style={styles.exportRosterBtn}
+                    style={[
+                      styles.exportRosterBtn,
+                      {
+                        backgroundColor: isDark ? '#1E293B' : '#ECFDF5',
+                        borderColor: isDark ? '#047857' : '#A7F3D0',
+                      },
+                    ]}
                     onPress={() => setIsExportMembersVisible(true)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="share-outline" size={14} color="#059669" />
-                    <Text style={styles.exportRosterText}>Extract / Export</Text>
+                    <Ionicons name="share-outline" size={13} color={colors.success} />
+                    <Text style={[styles.exportRosterText, { color: colors.success }]}>
+                      Extract / Export
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -471,9 +496,9 @@ export default function App() {
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Ionicons name="people-outline" size={48} color="#CBD5E1" />
-                  <Text style={styles.emptyTitle}>No Members Found</Text>
-                  <Text style={styles.emptySubtitle}>
+                  <Ionicons name="people-outline" size={44} color={colors.textMuted} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No Members Found</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                     Try adjusting your search query or domain filter.
                   </Text>
                 </View>
@@ -492,10 +517,10 @@ export default function App() {
           />
         )}
 
-        {/* Floating Action Button (FAB) - Easy thumb & desktop access */}
+        {/* Floating Action Button (FAB) */}
         {(activeTab === 'meetings' || activeTab === 'members') && (
           <TouchableOpacity
-            style={styles.floatingActionButton}
+            style={[styles.floatingActionButton, { backgroundColor: colors.primary }]}
             onPress={() => {
               if (activeTab === 'meetings') setIsNewMeetingVisible(true);
               else if (activeTab === 'members') setIsNewMemberVisible(true);
@@ -505,7 +530,7 @@ export default function App() {
           >
             <Ionicons
               name={activeTab === 'meetings' ? 'add' : 'person-add'}
-              size={20}
+              size={19}
               color="#FFFFFF"
             />
             <Text style={styles.fabText}>
@@ -557,45 +582,48 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
     gap: 12,
   },
   loadingText: {
     fontSize: 14,
-    color: '#64748B',
     fontWeight: '600',
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   listContent: {
-    padding: 16,
+    padding: 14,
     maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   tabHeader: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   tabSectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   tabSectionSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 12,
     marginTop: 2,
   },
   membersTabWrapper: {
@@ -603,31 +631,28 @@ const styles = StyleSheet.create({
     maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
-    paddingTop: 12,
+    paddingTop: 10,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
+    marginHorizontal: 14,
     marginBottom: 10,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 9 : 6,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
+    fontSize: 13,
   },
   domainRowHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     marginBottom: 10,
     flexWrap: 'wrap',
     gap: 8,
@@ -635,65 +660,48 @@ const styles = StyleSheet.create({
   domainFiltersScroll: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 5,
     flex: 1,
   },
   actionButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   importRosterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
   importRosterText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#4F46E5',
   },
   exportRosterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   exportRosterText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#047857',
   },
   domainChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  domainChipActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
   },
   domainChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  domainChipTextActive: {
-    color: '#FFFFFF',
+    fontSize: 11.5,
   },
   emptyState: {
     alignItems: 'center',
@@ -704,35 +712,33 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
   },
   emptySubtitle: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 12.5,
     textAlign: 'center',
     maxWidth: 280,
+    lineHeight: 17,
   },
   floatingActionButton: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
-    backgroundColor: '#4F46E5',
+    bottom: 20,
+    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-    borderRadius: 30,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 28,
     shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 8,
     zIndex: 999,
   },
   fabText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.2,
   },

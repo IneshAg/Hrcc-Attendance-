@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
 import { parseBulkMembersText, ParsedMemberRow } from '../utils/csvParser';
+import { useTheme } from '../context/ThemeContext';
 
 interface BulkImportModalProps {
   visible: boolean;
@@ -27,6 +28,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   onClose,
   onConfirmImport,
 }) => {
+  const { isDark, colors } = useTheme();
   const [inputText, setInputText] = useState('');
   const [parsedRows, setParsedRows] = useState<ParsedMemberRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,63 +79,100 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
           {/* Header */}
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
             <View style={styles.headerTitleCol}>
-              <Text style={styles.modalTitle}>Bulk Import / Update Members</Text>
-              <Text style={styles.modalSubtitle}>
-                Paste names, copy-paste columns from Excel/Sheets, or upload a CSV file
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Bulk Import / Update Members</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                Paste text blocks, copy-paste columns from Excel/Sheets, or upload a CSV file
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {step === 'input' ? (
             <View style={styles.contentBody}>
               {/* Instructions */}
-              <View style={styles.infoBanner}>
-                <Ionicons name="information-circle-outline" size={18} color="#4F46E5" />
-                <Text style={styles.infoBannerText}>
+              <View
+                style={[
+                  styles.infoBanner,
+                  {
+                    backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
+                    borderColor: isDark ? '#334155' : '#C7D2FE',
+                  },
+                ]}
+              >
+                <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                <Text style={[styles.infoBannerText, { color: isDark ? '#CBD5E1' : '#3730A3' }]}>
                   Paste structured text blocks (Name: ..., Reg.No: ...), simple name lists, or copy columns directly from Excel/Sheets. Existing members will automatically have their columns updated!
                 </Text>
               </View>
 
               {/* Paste Text Area */}
-              <Text style={styles.inputLabel}>Paste Text, Key-Value Details, Excel Rows, or CSV:</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                Paste Text, Key-Value Details, Excel Rows, or CSV:
+              </Text>
               <TextInput
-                style={styles.textArea}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
                 multiline
-                placeholder={`Examples:\n1. Structured Text Blocks (Auto-Updates Existing):\nName: Purva Jain\nReg.No: RA2411003010099\nSRM email: pj1234@srmist.edu.in\nPersonal Email: purva@gmail.com\nPursuing Branch: B.Tech CSE\nDepartment: Computing\nFA name: Dr Vinod D\n\n2. Simple Names:\nPurva Jain - Vice President\nInesh Agarwal - Tech Head\n\n3. Or CSV / Excel Rows:\nName, Reg.No, SRM Email, Branch, Department, FA Name, Domain, Role`}
+                placeholder={`Examples:\n1. Structured Text Blocks (Auto-Updates Existing):\nName: Purva Jain\nReg.No: RA2411003010099\nSRM email: pj1234@srmist.edu.in\nPursuing Branch: B.Tech CSE\n\n2. Simple Names:\nPurva Jain - Vice President\nInesh Agarwal - Tech Head\n\n3. Or CSV / Excel Rows:\nName, Reg.No, SRM Email, Branch, Department, Domain, Role`}
                 value={inputText}
                 onChangeText={setInputText}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
               />
 
               {/* Web File Input Shortcut */}
               {Platform.OS === 'web' && (
                 <View style={styles.fileUploadRow}>
-                  <Text style={styles.fileUploadLabel}>Or upload a .CSV file:</Text>
+                  <Text style={[styles.fileUploadLabel, { color: colors.textSecondary }]}>
+                    Or upload a .CSV file:
+                  </Text>
                   <input
                     type="file"
                     accept=".csv,.tsv,.txt"
                     onChange={handleFileUploadWeb}
-                    style={{ fontSize: 13 }}
+                    style={{ fontSize: 13, color: colors.text }}
                   />
                 </View>
               )}
 
               {/* Modal Actions */}
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+              <View style={[styles.modalActions, { borderTopColor: colors.cardBorder }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.cancelBtn,
+                    { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+                  ]}
+                  onPress={onClose}
+                >
+                  <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.primaryBtn, !inputText.trim() && styles.primaryBtnDisabled]}
+                  style={[
+                    styles.primaryBtn,
+                    { backgroundColor: colors.primary },
+                    !inputText.trim() && styles.primaryBtnDisabled,
+                  ]}
                   onPress={handleParse}
                   disabled={!inputText.trim()}
                 >
@@ -146,27 +185,63 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             <View style={styles.contentBody}>
               {/* Preview Stats Bar */}
               <View style={styles.previewStatsBar}>
-                <View style={styles.badgeNew}>
-                  <Text style={styles.badgeNewText}>🆕 {newMembersCount} New to Insert</Text>
+                <View
+                  style={[
+                    styles.badgeNew,
+                    {
+                      backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                      borderColor: isDark ? '#047857' : '#A7F3D0',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.badgeNewText, { color: isDark ? '#34D399' : '#047857' }]}>
+                    🆕 {newMembersCount} New
+                  </Text>
                 </View>
-                <View style={styles.badgeUpdate}>
-                  <Text style={styles.badgeUpdateText}>
+                <View
+                  style={[
+                    styles.badgeUpdate,
+                    {
+                      backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF',
+                      borderColor: isDark ? '#2563EB' : '#BFDBFE',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.badgeUpdateText, { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>
                     🔄 {updateMembersCount} Existing to Update
                   </Text>
                 </View>
-                <Text style={styles.totalRowsText}>Total: {parsedRows.length}</Text>
+                <Text style={[styles.totalRowsText, { color: colors.textMuted }]}>
+                  Total: {parsedRows.length}
+                </Text>
               </View>
 
               {/* Parsed List Preview */}
               <ScrollView style={styles.previewListScroll} showsVerticalScrollIndicator={true}>
-                {parsedRows.map((row, idx) => (
-                  <View key={idx} style={styles.previewRowCard}>
+                {parsedRows.map((row, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.previewRowCard,
+                      {
+                        backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                        borderColor: colors.cardBorder,
+                      },
+                    ]}
+                  >
                     <View style={styles.previewRowHeader}>
                       <View style={styles.previewNameGroup}>
-                        <Text style={styles.previewMemberName}>{row.name}</Text>
+                        <Text style={[styles.previewMemberName, { color: colors.text }]}>
+                          {index + 1}. {row.name}
+                        </Text>
                         {row.raNo ? (
-                          <View style={styles.raPill}>
-                            <Text style={styles.raPillText}>{row.raNo}</Text>
+                          <View
+                            style={[
+                              styles.raPill,
+                              { backgroundColor: isDark ? '#111827' : '#F1F5F9' },
+                            ]}
+                          >
+                            <Text style={[styles.raPillText, { color: colors.primary }]}>{row.raNo}</Text>
                           </View>
                         ) : null}
                       </View>
@@ -174,15 +249,17 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                       <View
                         style={[
                           styles.actionPill,
-                          row.isExisting ? styles.actionPillUpdate : styles.actionPillNew,
+                          row.isExisting
+                            ? { backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF' }
+                            : { backgroundColor: isDark ? '#064E3B' : '#ECFDF5' },
                         ]}
                       >
                         <Text
                           style={[
                             styles.actionPillText,
                             row.isExisting
-                              ? styles.actionPillTextUpdate
-                              : styles.actionPillTextNew,
+                              ? { color: isDark ? '#60A5FA' : '#2563EB' }
+                              : { color: isDark ? '#34D399' : '#059669' },
                           ]}
                         >
                           {row.isExisting ? 'Update' : 'New'}
@@ -191,33 +268,46 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     </View>
 
                     <View style={styles.previewMetaRow}>
-                      <Text style={styles.previewMetaItem}>
-                        {row.domain && row.domain !== 'None' ? `${row.domain} • ` : ''}
-                        {row.role || 'Member'}
+                      <Text style={[styles.previewMetaItem, { color: colors.textSecondary }]}>
+                        Role: {row.role || 'Member'}
                       </Text>
-                      {row.branch ? (
-                        <Text style={styles.previewMetaItem}>• {row.branch}</Text>
-                      ) : null}
-                      {row.faName ? (
-                        <Text style={styles.previewMetaItem}>• FA: {row.faName}</Text>
-                      ) : null}
+                      <Text style={[styles.previewMetaItem, { color: colors.textSecondary }]}>
+                        Domain: {row.domain || 'Technical'}
+                      </Text>
+                      {row.branch && (
+                        <Text style={[styles.previewMetaItem, { color: colors.textSecondary }]}>
+                          Branch: {row.branch}
+                        </Text>
+                      )}
+                      {row.srmEmail && (
+                        <Text style={[styles.previewMetaItem, { color: colors.textSecondary }]}>
+                          Email: {row.srmEmail}
+                        </Text>
+                      )}
                     </View>
                   </View>
                 ))}
               </ScrollView>
 
-              {/* Actions */}
-              <View style={styles.modalActions}>
+              {/* Action Buttons */}
+              <View style={[styles.modalActions, { borderTopColor: colors.cardBorder }]}>
                 <TouchableOpacity
-                  style={styles.cancelBtn}
+                  style={[
+                    styles.cancelBtn,
+                    { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+                  ]}
                   onPress={() => setStep('input')}
                   disabled={isProcessing}
                 >
-                  <Text style={styles.cancelText}>Back to Edit</Text>
+                  <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Back to Edit</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.primaryBtn, isProcessing && styles.primaryBtnDisabled]}
+                  style={[
+                    styles.primaryBtn,
+                    { backgroundColor: colors.success },
+                    isProcessing && styles.primaryBtnDisabled,
+                  ]}
                   onPress={handleConfirm}
                   disabled={isProcessing}
                 >
@@ -227,7 +317,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     <>
                       <Ionicons name="cloud-upload" size={17} color="#FFFFFF" />
                       <Text style={styles.primaryBtnText}>
-                        Confirm & Save to Supabase ({parsedRows.length})
+                        Confirm & Import ({parsedRows.length})
                       </Text>
                     </>
                   )}
@@ -244,18 +334,17 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 680,
+    maxWidth: 620,
     maxHeight: '92%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -268,20 +357,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerTitleCol: {
     flex: 1,
     marginRight: 8,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
   },
   modalSubtitle: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
@@ -292,104 +378,83 @@ const styles = StyleSheet.create({
   },
   infoBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: '#EEF2FF',
-    padding: 10,
     borderRadius: 8,
+    padding: 10,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   infoBannerText: {
-    fontSize: 12,
-    color: '#3730A3',
-    lineHeight: 16,
     flex: 1,
+    fontSize: 11.5,
+    lineHeight: 16,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
     marginBottom: 6,
   },
   textArea: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 13,
-    color: '#0F172A',
-    minHeight: 160,
-    maxHeight: 240,
-    textAlignVertical: 'top',
+    padding: 10,
+    borderWidth: 1,
+    minHeight: 150,
+    maxHeight: 220,
+    fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    textAlignVertical: 'top',
+    marginBottom: 10,
   },
   fileUploadRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 10,
+    marginBottom: 10,
   },
   fileUploadLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
   },
   previewStatsBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F8FAFC',
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     marginBottom: 10,
     flexWrap: 'wrap',
   },
   badgeNew: {
-    backgroundColor: '#ECFDF5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   badgeNewText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#047857',
   },
   badgeUpdate: {
-    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
   },
   badgeUpdateText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1D4ED8',
   },
   totalRowsText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
     marginLeft: 'auto',
   },
   previewListScroll: {
     maxHeight: 280,
   },
   previewRowCard: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 8,
-    padding: 10,
+    padding: 9,
     marginBottom: 6,
   },
   previewRowHeader: {
@@ -404,51 +469,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   previewMemberName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
   },
   raPill: {
-    backgroundColor: '#F1F5F9',
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 1.5,
     borderRadius: 4,
   },
   raPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: 10.5,
+    fontWeight: '700',
   },
   actionPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  actionPillNew: {
-    backgroundColor: '#ECFDF5',
-  },
-  actionPillUpdate: {
-    backgroundColor: '#EFF6FF',
-  },
   actionPillText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
-  },
-  actionPillTextNew: {
-    color: '#059669',
-  },
-  actionPillTextUpdate: {
-    color: '#2563EB',
   },
   previewMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
     marginTop: 4,
   },
   previewMetaItem: {
     fontSize: 11,
-    color: '#64748B',
   },
   modalActions: {
     flexDirection: 'row',
@@ -456,28 +505,24 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    marginTop: 10,
+    marginTop: 8,
   },
   cancelBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    backgroundColor: '#F1F5F9',
   },
   cancelText: {
     fontSize: 13,
-    color: '#475569',
     fontWeight: '600',
   },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: '#4F46E5',
   },
   primaryBtnDisabled: {
     opacity: 0.5,

@@ -18,6 +18,7 @@ import {
   downloadFile,
 } from '../utils/exportUtils';
 import { sortMembersByHierarchy } from '../utils/roleUtils';
+import { useTheme } from '../context/ThemeContext';
 
 interface ExportMembersModalProps {
   visible: boolean;
@@ -32,6 +33,7 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
   members,
   onClose,
 }) => {
+  const { isDark, colors } = useTheme();
   const [formatType, setFormatType] = useState<TextFormatType>('whatsapp');
   const [copied, setCopied] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
@@ -86,26 +88,44 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
           {/* Header */}
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
             <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.modalTitle}>Extract & Export Members</Text>
-              <Text style={styles.modalSubtitle}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Extract & Export Members</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                 Copy roster text for WhatsApp, download as formatted .txt, or export as CSV
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* Success Banner */}
           {downloadSuccess && (
-            <View style={styles.successBanner}>
-              <Ionicons name="checkmark-circle" size={16} color="#059669" />
-              <Text style={styles.successBannerText}>{downloadSuccess}</Text>
+            <View
+              style={[
+                styles.successBanner,
+                {
+                  backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                  borderColor: isDark ? '#047857' : '#A7F3D0',
+                },
+              ]}
+            >
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              <Text style={[styles.successBannerText, { color: colors.success }]}>
+                {downloadSuccess}
+              </Text>
             </View>
           )}
 
@@ -113,57 +133,99 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
           <View style={styles.exportActionsRow}>
             {/* 1. Copy for WhatsApp Button */}
             <TouchableOpacity
-              style={[styles.primaryActionBtn, styles.copyActionBtn]}
+              style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
               onPress={handleCopy}
               activeOpacity={0.8}
             >
               <Ionicons
                 name={copied ? 'checkmark-circle' : 'copy'}
-                size={16}
+                size={15}
                 color="#FFFFFF"
               />
               <Text style={styles.copyActionBtnText}>
-                {copied ? 'Copied to Clipboard!' : 'Copy for WhatsApp'}
+                {copied ? 'Copied!' : 'Copy for WhatsApp'}
               </Text>
             </TouchableOpacity>
 
             {/* 2. Download .TXT Button */}
             <TouchableOpacity
-              style={[styles.primaryActionBtn, styles.txtActionBtn]}
+              style={[
+                styles.primaryActionBtn,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
+                  borderColor: isDark ? '#3B82F6' : '#BFDBFE',
+                  borderWidth: 1,
+                },
+              ]}
               onPress={handleDownloadTxt}
               activeOpacity={0.8}
             >
-              <Ionicons name="document-text" size={16} color="#2563EB" />
-              <Text style={styles.txtActionBtnText}>Download .TXT</Text>
+              <Ionicons name="document-text" size={15} color={isDark ? '#60A5FA' : '#1D4ED8'} />
+              <Text style={[styles.txtActionBtnText, { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>
+                Download .TXT
+              </Text>
             </TouchableOpacity>
 
             {/* 3. Download .CSV Button */}
             <TouchableOpacity
-              style={[styles.primaryActionBtn, styles.csvActionBtn]}
+              style={[
+                styles.primaryActionBtn,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#ECFDF5',
+                  borderColor: isDark ? '#047857' : '#A7F3D0',
+                  borderWidth: 1,
+                },
+              ]}
               onPress={handleDownloadCsv}
               activeOpacity={0.8}
             >
-              <Ionicons name="grid" size={16} color="#059669" />
-              <Text style={styles.csvActionBtnText}>Download .CSV</Text>
+              <Ionicons name="grid" size={15} color={isDark ? '#34D399' : '#047857'} />
+              <Text style={[styles.csvActionBtnText, { color: isDark ? '#34D399' : '#047857' }]}>
+                Download .CSV
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Format Selector Tabs */}
           <View style={styles.tabsContainer}>
-            <Text style={styles.previewLabel}>Select Text Format to Preview:</Text>
+            <Text style={[styles.previewLabel, { color: colors.textMuted }]}>
+              Select Text Format to Preview:
+            </Text>
             <View style={styles.tabsRow}>
               <TouchableOpacity
-                style={[styles.tabBtn, formatType === 'whatsapp' && styles.tabBtnActive]}
+                style={[
+                  styles.tabBtn,
+                  {
+                    backgroundColor:
+                      formatType === 'whatsapp'
+                        ? isDark
+                          ? '#232946'
+                          : '#EEF2FF'
+                        : isDark
+                        ? '#1E293B'
+                        : '#F8FAFC',
+                    borderColor:
+                      formatType === 'whatsapp'
+                        ? colors.primary
+                        : colors.cardBorder,
+                  },
+                ]}
                 onPress={() => setFormatType('whatsapp')}
               >
                 <Ionicons
                   name="logo-whatsapp"
                   size={14}
-                  color={formatType === 'whatsapp' ? '#25D366' : '#64748B'}
+                  color={formatType === 'whatsapp' ? '#22C55E' : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.tabBtnText,
+                    {
+                      color:
+                        formatType === 'whatsapp'
+                          ? colors.primary
+                          : colors.textSecondary,
+                    },
                     formatType === 'whatsapp' && styles.tabBtnTextActive,
                   ]}
                 >
@@ -172,17 +234,39 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.tabBtn, formatType === 'report' && styles.tabBtnActive]}
+                style={[
+                  styles.tabBtn,
+                  {
+                    backgroundColor:
+                      formatType === 'report'
+                        ? isDark
+                          ? '#232946'
+                          : '#EEF2FF'
+                        : isDark
+                        ? '#1E293B'
+                        : '#F8FAFC',
+                    borderColor:
+                      formatType === 'report'
+                        ? colors.primary
+                        : colors.cardBorder,
+                  },
+                ]}
                 onPress={() => setFormatType('report')}
               >
                 <Ionicons
                   name="document-text-outline"
                   size={14}
-                  color={formatType === 'report' ? '#2563EB' : '#64748B'}
+                  color={formatType === 'report' ? colors.primary : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.tabBtnText,
+                    {
+                      color:
+                        formatType === 'report'
+                          ? colors.primary
+                          : colors.textSecondary,
+                    },
                     formatType === 'report' && styles.tabBtnTextActive,
                   ]}
                 >
@@ -191,17 +275,39 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.tabBtn, formatType === 'keyvalue' && styles.tabBtnActive]}
+                style={[
+                  styles.tabBtn,
+                  {
+                    backgroundColor:
+                      formatType === 'keyvalue'
+                        ? isDark
+                          ? '#232946'
+                          : '#EEF2FF'
+                        : isDark
+                        ? '#1E293B'
+                        : '#F8FAFC',
+                    borderColor:
+                      formatType === 'keyvalue'
+                        ? colors.primary
+                        : colors.cardBorder,
+                  },
+                ]}
                 onPress={() => setFormatType('keyvalue')}
               >
                 <Ionicons
-                  name="code-working-outline"
+                  name="code-slash"
                   size={14}
-                  color={formatType === 'keyvalue' ? '#7C3AED' : '#64748B'}
+                  color={formatType === 'keyvalue' ? colors.primary : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.tabBtnText,
+                    {
+                      color:
+                        formatType === 'keyvalue'
+                          ? colors.primary
+                          : colors.textSecondary,
+                    },
                     formatType === 'keyvalue' && styles.tabBtnTextActive,
                   ]}
                 >
@@ -211,22 +317,47 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
             </View>
           </View>
 
-          {/* Text Preview Box */}
-          <ScrollView style={styles.previewScroll} showsVerticalScrollIndicator={true}>
-            <View style={styles.previewCard}>
-              <Text style={styles.previewText} selectable={true}>
+          {/* Text Live Preview Box */}
+          <View
+            style={[
+              styles.previewContainer,
+              {
+                backgroundColor: isDark ? '#0B0F17' : '#F8FAFC',
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
+            <ScrollView style={styles.previewScroll} showsVerticalScrollIndicator={true}>
+              <Text
+                style={[
+                  styles.previewText,
+                  {
+                    color: colors.text,
+                    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+                  },
+                ]}
+                selectable={true}
+              >
                 {currentText}
               </Text>
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
 
-          {/* Modal Footer */}
-          <View style={styles.modalFooter}>
-            <Text style={styles.footerMemberCount}>
-              Showing all {members.length} members in hierarchy order
-            </Text>
-            <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-              <Text style={styles.doneBtnText}>Done</Text>
+          {/* Footer Bar */}
+          <View style={[styles.modalFooter, { borderTopColor: colors.cardBorder }]}>
+            <View style={styles.countBadge}>
+              <Text style={[styles.countBadgeText, { color: colors.textMuted }]}>
+                {sortedMembers.length} members formatted
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.dismissBtn,
+                { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              ]}
+              onPress={onClose}
+            >
+              <Text style={[styles.dismissBtnText, { color: colors.textSecondary }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -238,18 +369,17 @@ export const ExportMembersModal: React.FC<ExportMembersModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 680,
+    maxWidth: 640,
     maxHeight: '92%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -262,16 +392,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
   },
   modalSubtitle: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
@@ -280,18 +407,16 @@ const styles = StyleSheet.create({
   successBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ECFDF5',
-    padding: 10,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
     marginTop: 10,
   },
   successBannerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#047857',
   },
   exportActionsRow: {
     flexDirection: 'row',
@@ -302,50 +427,34 @@ const styles = StyleSheet.create({
   },
   primaryActionBtn: {
     flex: 1,
-    minWidth: 130,
+    minWidth: 120,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
     borderRadius: 8,
-  },
-  copyActionBtn: {
-    backgroundColor: '#0F172A',
   },
   copyActionBtnText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  txtActionBtn: {
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
   txtActionBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1D4ED8',
-  },
-  csvActionBtn: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   csvActionBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#047857',
   },
   tabsContainer: {
-    marginTop: 12,
+    marginTop: 10,
   },
   previewLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
-    color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     marginBottom: 6,
@@ -360,64 +469,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
   },
-  tabBtnActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#818CF8',
-  },
   tabBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
   },
   tabBtnTextActive: {
-    color: '#4F46E5',
     fontWeight: '700',
   },
-  previewScroll: {
+  previewContainer: {
+    borderWidth: 1,
+    borderRadius: 10,
     marginTop: 10,
-    maxHeight: 280,
+    padding: 10,
+    minHeight: 180,
+    maxHeight: 260,
   },
-  previewCard: {
-    backgroundColor: '#0F172A',
-    borderRadius: 8,
-    padding: 14,
+  previewScroll: {
+    flex: 1,
   },
   previewText: {
-    fontSize: 12,
-    color: '#E2E8F0',
-    lineHeight: 18,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 11.5,
+    lineHeight: 17,
   },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     marginTop: 10,
+    borderTopWidth: 1,
   },
-  footerMemberCount: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
+  countBadge: {},
+  countBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
-  doneBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#F1F5F9',
+  dismissBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 8,
   },
-  doneBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
+  dismissBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

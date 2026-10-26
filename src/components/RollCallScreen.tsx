@@ -7,12 +7,14 @@ import {
   TextInput,
   FlatList,
   Modal,
+  ScrollView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember, Meeting, AttendanceRecord, AttendanceStatus } from '../types';
 import { calculateMeetingSummary, saveMeetingAttendance } from '../storage/storage';
 import { getRoleBadgeConfig, sortMembersByHierarchy } from '../utils/roleUtils';
+import { useTheme } from '../context/ThemeContext';
 
 interface RollCallScreenProps {
   meeting: Meeting;
@@ -23,7 +25,7 @@ interface RollCallScreenProps {
   onAttendanceUpdated: (updatedRecord: AttendanceRecord) => void;
 }
 
-type FilterOption = 'all' | 'unmarked' | 'present' | 'absent' | 'late' | 'excused';
+type FilterOption = 'unmarked' | 'all' | 'present' | 'absent';
 
 export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   meeting,
@@ -33,6 +35,8 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   onOpenShare,
   onAttendanceUpdated,
 }) => {
+  const { isDark, colors } = useTheme();
+
   // Current attendance record state
   const [attendance, setAttendance] = useState<AttendanceRecord>(() => {
     return (
@@ -46,7 +50,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  // By default show 'unmarked' first as requested so roll call is fast and effortless
+  // By default show 'unmarked' first so roll call is fast and effortless
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>(() => {
     const initialMarkedCount = Object.keys(initialAttendance?.statuses || {}).length;
     if (members.length > 0 && initialMarkedCount >= members.length) {
@@ -108,7 +112,17 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   };
 
   const handleResetAll = () => {
-    updateAndSave({}, {});
+    const doReset = () => {
+      updateAndSave({}, {});
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Reset all roll call markings for this meeting?')) {
+        doReset();
+      }
+    } else {
+      doReset();
+    }
   };
 
   // Note management
@@ -119,7 +133,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
 
   const saveMemberNote = () => {
     if (!editingNoteMember) return;
-    const newNotes = { ...(attendance.notes || {}) };
+    const newNotes = { ...attendance.notes };
     if (noteText.trim()) {
       newNotes[editingNoteMember.id] = noteText.trim();
     } else {
@@ -134,35 +148,28 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
     return calculateMeetingSummary(attendance, members.length);
   }, [attendance, members.length]);
 
-  // Filtered and hierarchy-sorted members list
+  // Filter members
   const filteredMembers = useMemo(() => {
-    const list = members.filter((member) => {
-      // Search match
+    const list = members.filter((m) => {
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
-        member.name.toLowerCase().includes(q) ||
-        (member.raNo && member.raNo.toLowerCase().includes(q)) ||
-        (member.domain && member.domain.toLowerCase().includes(q)) ||
-        (member.role && member.role.toLowerCase().includes(q)) ||
-        (member.branch && member.branch.toLowerCase().includes(q)) ||
-        (member.department && member.department.toLowerCase().includes(q)) ||
-        (member.srmEmail && member.srmEmail.toLowerCase().includes(q)) ||
-        (member.personalEmail && member.personalEmail.toLowerCase().includes(q)) ||
-        (member.section && member.section.toLowerCase().includes(q)) ||
-        (member.faName && member.faName.toLowerCase().includes(q)) ||
-        (member.faEmail && member.faEmail.toLowerCase().includes(q));
+        m.name.toLowerCase().includes(q) ||
+        (m.raNo && m.raNo.toLowerCase().includes(q)) ||
+        (m.domain && m.domain.toLowerCase().includes(q)) ||
+        (m.role && m.role.toLowerCase().includes(q)) ||
+        (m.branch && m.branch.toLowerCase().includes(q)) ||
+        (m.department && m.department.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
 
-      // Filter match
-      const status = attendance.statuses[member.id];
-      if (selectedFilter === 'all') return true;
+      const status = attendance.statuses[m.id];
       if (selectedFilter === 'unmarked') return !status;
-      return status === selectedFilter;
+      if (selectedFilter === 'present') return status === 'present';
+      if (selectedFilter === 'absent') return status === 'absent';
+      return true; // 'all'
     });
 
-    // When viewing 'all', keep unmarked members at the very top for convenience, then hierarchy
     if (selectedFilter === 'all') {
       return [...list].sort((a, b) => {
         const aMarked = Boolean(attendance.statuses[a.id]);
@@ -178,7 +185,7 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
     return sortMembersByHierarchy(list);
   }, [members, searchQuery, selectedFilter, attendance.statuses]);
 
-  // Get initials for avatar
+  // Initials helper
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -194,33 +201,55 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
     const roleConfig = getRoleBadgeConfig(item.role, item.domain);
 
     return (
-      <View style={styles.memberCard}>
-        {/* Left: Avatar & Info */}
-        <View style={styles.memberLeft}>
-          <View style={[styles.avatar, { backgroundColor: item.avatarColor || '#4F46E5' }]}>
+      <View
+        style={[
+          styles.memberCard,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.cardBorder,
+          },
+        ]}
+      >
+        {/* Top: Avatar, Name, Reg.No, Role & Note Trigger */}
+        <View style={styles.memberTopRow}>
+          <View
+            style={[
+              styles.avatar,
+              { backgroundColor: item.avatarColor || colors.primary },
+            ]}
+          >
             <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
           </View>
+
           <View style={styles.memberInfo}>
-            <View style={styles.memberNameRow}>
-              <Text style={styles.memberName}>{item.name}</Text>
+            <View style={styles.nameLine}>
+              <Text style={[styles.memberName, { color: colors.text }]} numberOfLines={1}>
+                {item.name}
+              </Text>
               {item.raNo ? (
-                <View style={styles.raBadge}>
-                  <Text style={styles.raText}>{item.raNo}</Text>
+                <View
+                  style={[
+                    styles.raBadge,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                      borderColor: isDark ? '#334155' : '#E2E8F0',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.raText, { color: colors.primary }]}>{item.raNo}</Text>
                 </View>
               ) : null}
-              {hasNote && (
-                <TouchableOpacity onPress={() => openNoteModal(item)}>
-                  <Ionicons name="chatbubble-ellipses" size={15} color="#6366F1" />
-                </TouchableOpacity>
-              )}
             </View>
 
-            <View style={styles.memberMetaRow}>
-              {/* Role Badge with Icon */}
+            {/* Badges line: Role + Domain */}
+            <View style={styles.metaLine}>
               <View
                 style={[
                   styles.roleBadgeMini,
-                  { backgroundColor: roleConfig.badgeBg, borderColor: roleConfig.badgeBorder },
+                  {
+                    backgroundColor: isDark ? '#1E293B' : roleConfig.badgeBg,
+                    borderColor: isDark ? '#334155' : roleConfig.badgeBorder,
+                  },
                 ]}
               >
                 <Ionicons
@@ -235,36 +264,75 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
               </View>
 
               {item.domain && item.domain !== 'None' ? (
-                <View style={styles.domainTag}>
-                  <Text style={styles.domainTagText}>{item.domain}</Text>
+                <View
+                  style={[
+                    styles.domainTag,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                      borderColor: isDark ? '#334155' : '#E2E8F0',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.domainTagText, { color: colors.textSecondary }]}>
+                    {item.domain}
+                  </Text>
                 </View>
               ) : null}
-
-              <Text style={styles.collegeDetailText}>
-                {item.branch || item.department} {item.section ? `• Sec ${item.section}` : ''}
-              </Text>
             </View>
-
-            <Text style={styles.faText}>
-              FA: {item.faName} {item.faEmail ? `(${item.faEmail})` : ''}
-            </Text>
-
-            {hasNote && (
-              <Text style={styles.noteSnippet} numberOfLines={1}>
-                Note: {attendance.notes?.[item.id]}
-              </Text>
-            )}
           </View>
-        </View>
 
-        {/* Right: Clean Present / Absent / Note Selector */}
-        <View style={styles.statusButtonsContainer}>
-          {/* Present */}
+          {/* Note Icon Button */}
           <TouchableOpacity
             style={[
-              styles.statusBtn,
-              styles.presentBtn,
-              status === 'present' && styles.presentBtnActive,
+              styles.noteBtn,
+              hasNote && {
+                backgroundColor: isDark ? '#232946' : '#EEF2FF',
+                borderColor: colors.primary,
+              },
+            ]}
+            onPress={() => openNoteModal(item)}
+            accessibilityLabel="Add Note"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={hasNote ? 'chatbubble-ellipses' : 'chatbubble-outline'}
+              size={16}
+              color={hasNote ? colors.primary : colors.textMuted}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {hasNote && (
+          <View
+            style={[
+              styles.noteSnippetBox,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                borderColor: isDark ? '#334155' : '#E2E8F0',
+              },
+            ]}
+          >
+            <Text style={[styles.noteSnippetText, { color: colors.textSecondary }]} numberOfLines={2}>
+              📝 {attendance.notes?.[item.id]}
+            </Text>
+          </View>
+        )}
+
+        {/* Bottom Action Row: Large Thumb-Friendly Buttons (Present / Absent) */}
+        <View style={styles.actionButtonsRow}>
+          {/* Present Button */}
+          <TouchableOpacity
+            style={[
+              styles.statusButton,
+              status === 'present'
+                ? {
+                    backgroundColor: '#10B981',
+                    borderColor: '#059669',
+                  }
+                : {
+                    backgroundColor: isDark ? '#064E3B20' : '#ECFDF5',
+                    borderColor: isDark ? '#047857' : '#A7F3D0',
+                  },
             ]}
             onPress={() => handleSetStatus(item.id, 'present')}
             activeOpacity={0.7}
@@ -272,27 +340,36 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Ionicons
               name={status === 'present' ? 'checkmark-circle' : 'checkmark'}
-              size={14}
+              size={18}
               color={status === 'present' ? '#FFFFFF' : '#059669'}
-              style={{ marginRight: 4 }}
+              style={{ marginRight: 6 }}
             />
             <Text
               style={[
-                styles.statusBtnText,
-                styles.presentBtnText,
-                status === 'present' && styles.statusBtnTextActive,
+                styles.statusButtonText,
+                {
+                  color: status === 'present' ? '#FFFFFF' : '#059669',
+                  fontWeight: status === 'present' ? '800' : '700',
+                },
               ]}
             >
               Present
             </Text>
           </TouchableOpacity>
 
-          {/* Absent */}
+          {/* Absent Button */}
           <TouchableOpacity
             style={[
-              styles.statusBtn,
-              styles.absentBtn,
-              status === 'absent' && styles.absentBtnActive,
+              styles.statusButton,
+              status === 'absent'
+                ? {
+                    backgroundColor: '#EF4444',
+                    borderColor: '#DC2626',
+                  }
+                : {
+                    backgroundColor: isDark ? '#450A0A20' : '#FEF2F2',
+                    borderColor: isDark ? '#991B1B' : '#FECACA',
+                  },
             ]}
             onPress={() => handleSetStatus(item.id, 'absent')}
             activeOpacity={0.7}
@@ -300,33 +377,21 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           >
             <Ionicons
               name={status === 'absent' ? 'close-circle' : 'close'}
-              size={14}
+              size={18}
               color={status === 'absent' ? '#FFFFFF' : '#DC2626'}
-              style={{ marginRight: 4 }}
+              style={{ marginRight: 6 }}
             />
             <Text
               style={[
-                styles.statusBtnText,
-                styles.absentBtnText,
-                status === 'absent' && styles.statusBtnTextActive,
+                styles.statusButtonText,
+                {
+                  color: status === 'absent' ? '#FFFFFF' : '#DC2626',
+                  fontWeight: status === 'absent' ? '800' : '700',
+                },
               ]}
             >
               Absent
             </Text>
-          </TouchableOpacity>
-
-          {/* Add Note Button */}
-          <TouchableOpacity
-            style={[styles.noteIconBtn, hasNote && styles.noteIconBtnActive]}
-            onPress={() => openNoteModal(item)}
-            activeOpacity={0.7}
-            accessibilityLabel={`Add Note for ${item.name}`}
-          >
-            <Ionicons
-              name={hasNote ? 'chatbubble-ellipses' : 'chatbubble-outline'}
-              size={16}
-              color={hasNote ? '#4F46E5' : '#64748B'}
-            />
           </TouchableOpacity>
         </View>
       </View>
@@ -334,76 +399,109 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
   };
 
   return (
-    <View style={styles.container}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={20} color="#1E293B" />
-          <Text style={styles.backButtonText}>Meetings</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Top Header */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.cardBorder,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <Text style={[styles.backText, { color: colors.text }]}>Back</Text>
         </TouchableOpacity>
 
         <View style={styles.topMeetingInfo}>
-          <Text style={styles.topTitle} numberOfLines={1}>
+          <Text style={[styles.meetingHeaderTitle, { color: colors.text }]} numberOfLines={1}>
             {meeting.title}
           </Text>
-          <Text style={styles.topMeta}>
-            {meeting.date} • {meeting.time}
+          <Text style={[styles.meetingHeaderSubtitle, { color: colors.textSecondary }]}>
+            {meeting.date} • {meeting.location}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={styles.shareButton}
+          style={[styles.shareHeaderBtn, { backgroundColor: colors.primary }]}
           onPress={() => onOpenShare(meeting, attendance)}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="share-social-outline" size={18} color="#4F46E5" />
-          <Text style={styles.shareButtonText}>Share</Text>
+          <Ionicons name="share-social-outline" size={15} color="#FFFFFF" />
+          <Text style={styles.shareHeaderText}>Share</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content Area */}
-      <View style={styles.innerContent}>
-        {/* Live Metrics Header */}
-        <View style={styles.metricsCard}>
+      <View style={styles.contentWrapper}>
+        {/* Live Metrics Header Card */}
+        <View
+          style={[
+            styles.metricsCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
           <View style={styles.metricsRow}>
             <View style={styles.metricItem}>
-              <Text style={styles.metricValue}>{summary.total}</Text>
-              <Text style={styles.metricLabel}>Total</Text>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{summary.total}</Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Total</Text>
             </View>
-            <View style={styles.metricDivider} />
+
+            <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: '#059669' }]}>{summary.present}</Text>
-              <Text style={[styles.metricLabel, { color: '#059669' }]}>Present</Text>
+              <Text style={[styles.metricValue, { color: colors.success }]}>{summary.present}</Text>
+              <Text style={[styles.metricLabel, { color: colors.success }]}>Present</Text>
             </View>
-            <View style={styles.metricDivider} />
+
+            <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: '#DC2626' }]}>{summary.absent}</Text>
-              <Text style={[styles.metricLabel, { color: '#DC2626' }]}>Absent</Text>
+              <Text style={[styles.metricValue, { color: colors.danger }]}>{summary.absent}</Text>
+              <Text style={[styles.metricLabel, { color: colors.danger }]}>Absent</Text>
             </View>
-            <View style={styles.metricDivider} />
+
+            <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: '#64748B' }]}>{summary.unmarked}</Text>
-              <Text style={[styles.metricLabel, { color: '#64748B' }]}>Unmarked</Text>
+              <Text style={[styles.metricValue, { color: colors.textMuted }]}>
+                {summary.unmarked}
+              </Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Unmarked</Text>
             </View>
-            <View style={styles.metricDivider} />
+
+            <View style={[styles.metricDivider, { backgroundColor: colors.cardBorder }]} />
 
             <View style={styles.metricItem}>
-              <Text style={[styles.metricValue, { color: '#4F46E5' }]}>{summary.percentage}%</Text>
-              <Text style={[styles.metricLabel, { color: '#4F46E5' }]}>Turnout</Text>
+              <Text style={[styles.metricValue, { color: colors.primary }]}>
+                {summary.percentage}%
+              </Text>
+              <Text style={[styles.metricLabel, { color: colors.primary }]}>Turnout</Text>
             </View>
           </View>
 
-          {/* Progress Bar */}
-          <View style={styles.progressContainer}>
+          {/* Turnout Progress Bar */}
+          <View
+            style={[
+              styles.progressTrack,
+              { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+            ]}
+          >
             <View
               style={[
                 styles.progressBar,
                 {
                   width: `${Math.min(100, Math.max(0, summary.percentage))}%`,
-                  backgroundColor: summary.percentage >= 75 ? '#10B981' : '#F59E0B',
+                  backgroundColor: summary.percentage >= 75 ? '#10B981' : colors.primary,
                 },
               ]}
             />
@@ -411,91 +509,211 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
         </View>
 
         {/* Quick Bulk Actions */}
-        <View style={styles.bulkActionsRow}>
+        <View style={styles.bulkRow}>
           <TouchableOpacity
-            style={styles.bulkBtnPresent}
+            style={[
+              styles.bulkBtn,
+              {
+                backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                borderColor: isDark ? '#047857' : '#A7F3D0',
+              },
+            ]}
             onPress={handleMarkAllPresent}
             activeOpacity={0.7}
           >
-            <Ionicons name="flash" size={14} color="#047857" />
-            <Text style={styles.bulkBtnTextPresent}>All Present</Text>
+            <Ionicons name="flash" size={13} color={isDark ? '#34D399' : '#047857'} />
+            <Text style={[styles.bulkBtnText, { color: isDark ? '#34D399' : '#047857' }]}>
+              All Present
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.bulkBtnAbsent}
+            style={[
+              styles.bulkBtn,
+              {
+                backgroundColor: isDark ? '#450A0A' : '#FEF2F2',
+                borderColor: isDark ? '#991B1B' : '#FECACA',
+              },
+            ]}
             onPress={handleMarkAllAbsent}
             activeOpacity={0.7}
           >
-            <Ionicons name="close-circle-outline" size={14} color="#B91C1C" />
-            <Text style={styles.bulkBtnTextAbsent}>All Absent</Text>
+            <Ionicons name="close-circle-outline" size={13} color={isDark ? '#FCA5A5' : '#B91C1C'} />
+            <Text style={[styles.bulkBtnText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>
+              All Absent
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.bulkBtnReset}
+            style={[
+              styles.bulkBtn,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                borderColor: colors.cardBorder,
+              },
+            ]}
             onPress={handleResetAll}
             activeOpacity={0.7}
           >
-            <Ionicons name="reload-outline" size={14} color="#475569" />
-            <Text style={styles.bulkBtnTextReset}>Clear</Text>
+            <Ionicons name="reload-outline" size={13} color={colors.textSecondary} />
+            <Text style={[styles.bulkBtnText, { color: colors.textSecondary }]}>
+              Reset
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={18} color="#94A3B8" />
+        {/* Search Input */}
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: colors.inputBg,
+              borderColor: colors.inputBorder,
+            },
+          ]}
+        >
+          <Ionicons name="search-outline" size={17} color={colors.textMuted} />
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search name, RA No, domain, dept, or FA..."
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search name, Reg.No, branch..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.textMuted}
             clearButtonMode="while-editing"
           />
           {searchQuery ? (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color="#94A3B8" />
+              <Ionicons name="close-circle" size={17} color={colors.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
 
-        {/* Filter Pills (Unmarked first by default) */}
-        <View style={styles.filterPillsRow}>
+        {/* Filter Chips (Horizontal Scrollable) */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterPillsScroll}
+        >
           <TouchableOpacity
-            style={[styles.filterPill, selectedFilter === 'unmarked' && styles.filterPillActive]}
+            style={[
+              styles.filterPill,
+              {
+                backgroundColor:
+                  selectedFilter === 'unmarked'
+                    ? colors.primary
+                    : isDark
+                    ? '#1E293B'
+                    : '#F1F5F9',
+                borderColor:
+                  selectedFilter === 'unmarked' ? colors.primary : colors.cardBorder,
+              },
+            ]}
             onPress={() => setSelectedFilter('unmarked')}
           >
-            <Text style={[styles.filterPillText, selectedFilter === 'unmarked' && styles.filterPillTextActive]}>
+            <Text
+              style={[
+                styles.filterPillText,
+                {
+                  color:
+                    selectedFilter === 'unmarked' ? '#FFFFFF' : colors.textSecondary,
+                  fontWeight: selectedFilter === 'unmarked' ? '700' : '600',
+                },
+              ]}
+            >
               Unmarked ({summary.unmarked})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, selectedFilter === 'all' && styles.filterPillActive]}
+            style={[
+              styles.filterPill,
+              {
+                backgroundColor:
+                  selectedFilter === 'all'
+                    ? colors.primary
+                    : isDark
+                    ? '#1E293B'
+                    : '#F1F5F9',
+                borderColor:
+                  selectedFilter === 'all' ? colors.primary : colors.cardBorder,
+              },
+            ]}
             onPress={() => setSelectedFilter('all')}
           >
-            <Text style={[styles.filterPillText, selectedFilter === 'all' && styles.filterPillTextActive]}>
+            <Text
+              style={[
+                styles.filterPillText,
+                {
+                  color:
+                    selectedFilter === 'all' ? '#FFFFFF' : colors.textSecondary,
+                  fontWeight: selectedFilter === 'all' ? '700' : '600',
+                },
+              ]}
+            >
               All ({members.length})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, selectedFilter === 'present' && styles.filterPillActive]}
+            style={[
+              styles.filterPill,
+              {
+                backgroundColor:
+                  selectedFilter === 'present'
+                    ? '#10B981'
+                    : isDark
+                    ? '#1E293B'
+                    : '#F1F5F9',
+                borderColor:
+                  selectedFilter === 'present' ? '#10B981' : colors.cardBorder,
+              },
+            ]}
             onPress={() => setSelectedFilter('present')}
           >
-            <Text style={[styles.filterPillText, selectedFilter === 'present' && styles.filterPillTextActive]}>
+            <Text
+              style={[
+                styles.filterPillText,
+                {
+                  color:
+                    selectedFilter === 'present' ? '#FFFFFF' : colors.textSecondary,
+                  fontWeight: selectedFilter === 'present' ? '700' : '600',
+                },
+              ]}
+            >
               Present ({summary.present})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, selectedFilter === 'absent' && styles.filterPillActive]}
+            style={[
+              styles.filterPill,
+              {
+                backgroundColor:
+                  selectedFilter === 'absent'
+                    ? '#EF4444'
+                    : isDark
+                    ? '#1E293B'
+                    : '#F1F5F9',
+                borderColor:
+                  selectedFilter === 'absent' ? '#EF4444' : colors.cardBorder,
+              },
+            ]}
             onPress={() => setSelectedFilter('absent')}
           >
-            <Text style={[styles.filterPillText, selectedFilter === 'absent' && styles.filterPillTextActive]}>
+            <Text
+              style={[
+                styles.filterPillText,
+                {
+                  color:
+                    selectedFilter === 'absent' ? '#FFFFFF' : colors.textSecondary,
+                  fontWeight: selectedFilter === 'absent' ? '700' : '600',
+                },
+              ]}
+            >
               Absent ({summary.absent})
             </Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {/* Member Roll Call List */}
         <FlatList
@@ -507,64 +725,103 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             selectedFilter === 'unmarked' && !searchQuery ? (
-              <View style={styles.allDoneCard}>
-                <View style={styles.allDoneIconCircle}>
+              <View
+                style={[
+                  styles.allDoneCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: isDark ? '#064E3B' : '#A7F3D0',
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.allDoneIconCircle,
+                    { backgroundColor: isDark ? '#064E3B' : '#ECFDF5' },
+                  ]}
+                >
                   <Ionicons name="checkmark-done-circle" size={44} color="#10B981" />
                 </View>
-                <Text style={styles.allDoneTitle}>All Members Marked!</Text>
-                <Text style={styles.allDoneSubtitle}>
+                <Text style={[styles.allDoneTitle, { color: colors.text }]}>All Members Marked!</Text>
+                <Text style={[styles.allDoneSubtitle, { color: colors.textSecondary }]}>
                   Roll call complete: {summary.present} Present, {summary.absent} Absent ({summary.percentage}% Turnout).
                 </Text>
                 <View style={styles.allDoneActionsRow}>
                   <TouchableOpacity
-                    style={styles.allDoneBtnAll}
+                    style={[
+                      styles.allDoneBtnReview,
+                      {
+                        backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
+                        borderColor: colors.primary,
+                      },
+                    ]}
                     onPress={() => setSelectedFilter('all')}
                   >
-                    <Ionicons name="list" size={15} color="#4F46E5" />
-                    <Text style={styles.allDoneBtnTextAll}>Review All ({members.length})</Text>
+                    <Ionicons name="list" size={14} color={colors.primary} />
+                    <Text style={[styles.allDoneBtnTextReview, { color: colors.primary }]}>
+                      Review All ({members.length})
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.allDoneBtnShare}
+                    style={[styles.allDoneBtnShare, { backgroundColor: colors.primary }]}
                     onPress={() => onOpenShare(meeting, attendance)}
                   >
-                    <Ionicons name="share-social-outline" size={15} color="#059669" />
-                    <Text style={styles.allDoneBtnTextShare}>Share Attendance</Text>
+                    <Ionicons name="share-social-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.allDoneBtnTextShare}>Share Report</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
               <View style={styles.emptyContainer}>
-                <Ionicons name="person-remove-outline" size={36} color="#CBD5E1" />
-                <Text style={styles.emptyText}>No members match this filter</Text>
+                <Ionicons name="person-remove-outline" size={36} color={colors.textMuted} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  No members match this filter
+                </Text>
               </View>
             )
           }
         />
       </View>
 
-      {/* Note Edit Modal */}
+      {/* Note Modal */}
       <Modal
         visible={editingNoteMember !== null}
         animationType="fade"
         transparent={true}
         onRequestClose={() => setEditingNoteMember(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.noteModalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+          <View
+            style={[
+              styles.noteModalContent,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
             <View style={styles.noteModalHeader}>
-              <Text style={styles.noteModalTitle}>
+              <Text style={[styles.noteModalTitle, { color: colors.text }]}>
                 Note for {editingNoteMember?.name}
               </Text>
               <TouchableOpacity onPress={() => setEditingNoteMember(null)}>
-                <Ionicons name="close" size={22} color="#64748B" />
+                <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
             <TextInput
-              style={styles.noteTextInput}
+              style={[
+                styles.noteTextInput,
+                {
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.inputBorder,
+                  color: colors.text,
+                },
+              ]}
               multiline
               numberOfLines={3}
               placeholder="e.g. Arrived late due to lab, prior notice given, etc."
+              placeholderTextColor={colors.textMuted}
               value={noteText}
               onChangeText={setNoteText}
               autoFocus
@@ -572,13 +829,21 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
 
             <View style={styles.noteModalActions}>
               <TouchableOpacity
-                style={styles.noteCancelBtn}
+                style={[
+                  styles.noteCancelBtn,
+                  {
+                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                  },
+                ]}
                 onPress={() => setEditingNoteMember(null)}
               >
-                <Text style={styles.noteCancelText}>Cancel</Text>
+                <Text style={[styles.noteCancelText, { color: colors.textSecondary }]}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.noteSaveBtn} onPress={saveMemberNote}>
+              <TouchableOpacity
+                style={[styles.noteSaveBtn, { backgroundColor: colors.primary }]}
+                onPress={saveMemberNote}
+              >
                 <Text style={styles.noteSaveText}>Save Note</Text>
               </TouchableOpacity>
             </View>
@@ -592,289 +857,208 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   topBar: {
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
   },
-  backButtonText: {
-    fontSize: 13,
+  backText: {
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
   },
   topMeetingInfo: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: 8,
   },
-  topTitle: {
+  meetingHeaderTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  topMeta: {
-    fontSize: 12,
-    color: '#64748B',
+  meetingHeaderSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
     marginTop: 1,
   },
-  shareButton: {
+  shareHeaderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
-  shareButtonText: {
-    fontSize: 13,
+  shareHeaderText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
   },
-  innerContent: {
+  contentWrapper: {
     flex: 1,
     maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
   },
   metricsCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    padding: 12,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
   },
   metricsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   metricItem: {
+    flex: 1,
     alignItems: 'center',
   },
   metricValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
   },
   metricLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#64748B',
-    marginTop: 2,
-    textTransform: 'uppercase',
+    marginTop: 1,
   },
   metricDivider: {
     width: 1,
-    height: 24,
-    backgroundColor: '#E2E8F0',
+    height: 22,
   },
-  progressContainer: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
+  progressTrack: {
+    height: 5,
+    borderRadius: 2.5,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2.5,
   },
-  bulkActionsRow: {
+  bulkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 10,
   },
-  bulkBtnPresent: {
+  bulkBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#ECFDF5',
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 7,
-    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
-  bulkBtnTextPresent: {
-    fontSize: 12,
+  bulkBtnText: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#047857',
-  },
-  bulkBtnAbsent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#FEF2F2',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  bulkBtnTextAbsent: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#B91C1C',
-  },
-  bulkBtnReset: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  bulkBtnTextReset: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 10,
     gap: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 10,
+    height: 38,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
+    fontSize: 13,
+    paddingVertical: 6,
   },
-  filterPillsRow: {
+  filterPillsScroll: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 6,
-    marginBottom: 12,
+    paddingBottom: 10,
   },
   filterPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  filterPillActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
   },
   filterPillText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  filterPillTextActive: {
-    color: '#FFFFFF',
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   memberCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
-    marginBottom: 8,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
-  memberLeft: {
+  memberTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    marginRight: 8,
+    gap: 10,
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '800',
+    fontSize: 13,
   },
   memberInfo: {
     flex: 1,
+    minWidth: 0,
   },
-  memberNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  memberName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  raBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
-  raText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#334155',
-    letterSpacing: 0.2,
-  },
-  memberMetaRow: {
+  nameLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flexWrap: 'wrap',
+  },
+  memberName: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  raBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  raText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  metaLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: 3,
+    flexWrap: 'wrap',
   },
   roleBadgeMini: {
     flexDirection: 'row',
@@ -889,206 +1073,135 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   domainTag: {
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
   domainTagText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4F46E5',
-  },
-  collegeDetailText: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  faText: {
-    fontSize: 11,
-    color: '#475569',
+    fontSize: 10,
     fontWeight: '600',
-    marginTop: 2,
   },
-  noteSnippet: {
+  noteBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  noteSnippetBox: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: 8,
+    borderWidth: 1,
+  },
+  noteSnippetText: {
     fontSize: 11,
-    color: '#6366F1',
-    marginTop: 3,
     fontStyle: 'italic',
   },
-  statusButtonsContainer: {
+  actionButtonsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E2E8F0',
   },
-  statusBtn: {
-    paddingHorizontal: 11,
-    height: 38,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  statusButton: {
+    flex: 1,
     flexDirection: 'row',
-    borderWidth: 1.5,
-  },
-  statusBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  statusBtnTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  // Present Button
-  presentBtn: {
-    borderColor: '#A7F3D0',
-    backgroundColor: '#ECFDF5',
-  },
-  presentBtnActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#059669',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  presentBtnText: {
-    color: '#047857',
-  },
-  // Absent Button
-  absentBtn: {
-    borderColor: '#FECACA',
-    backgroundColor: '#FEF2F2',
-  },
-  absentBtnActive: {
-    backgroundColor: '#EF4444',
-    borderColor: '#DC2626',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  absentBtnText: {
-    color: '#B91C1C',
-  },
-  noteIconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    paddingVertical: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  noteIconBtnActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#818CF8',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 36,
-    gap: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#94A3B8',
-    fontWeight: '500',
+  statusButtonText: {
+    fontSize: 13,
   },
   allDoneCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 24,
-    marginVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   allDoneIconCircle: {
-    marginBottom: 10,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   allDoneTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
     marginBottom: 4,
   },
   allDoneSubtitle: {
     fontSize: 13,
-    color: '#64748B',
     textAlign: 'center',
     lineHeight: 18,
-    maxWidth: 380,
     marginBottom: 16,
+    maxWidth: 280,
   },
   allDoneActionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
   },
-  allDoneBtnAll: {
+  allDoneBtnReview: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EEF2FF',
-    paddingVertical: 9,
     paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
-  allDoneBtnTextAll: {
-    fontSize: 13,
+  allDoneBtnTextReview: {
+    fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
   },
   allDoneBtnShare: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ECFDF5',
-    paddingVertical: 9,
     paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   allDoneBtnTextShare: {
-    fontSize: 13,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
-    color: '#059669',
   },
-  // Modal styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
   },
   noteModalContent: {
     width: '100%',
-    maxWidth: 450,
-    backgroundColor: '#FFFFFF',
+    maxWidth: 420,
     borderRadius: 14,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
+    padding: 16,
+    borderWidth: 1,
   },
   noteModalHeader: {
     flexDirection: 'row',
@@ -1097,21 +1210,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   noteModalTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
   },
   noteTextInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: '#0F172A',
+    padding: 10,
+    borderWidth: 1,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    fontSize: 13,
+    marginBottom: 14,
   },
   noteModalActions: {
     flexDirection: 'row',
@@ -1119,25 +1228,22 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   noteCancelBtn: {
-    paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   noteCancelText: {
     fontSize: 13,
-    color: '#475569',
     fontWeight: '600',
   },
   noteSaveBtn: {
-    paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 6,
-    backgroundColor: '#4F46E5',
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   noteSaveText: {
-    fontSize: 13,
     color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
   },
 });

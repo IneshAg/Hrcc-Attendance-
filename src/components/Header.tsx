@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 interface HeaderProps {
   title?: string;
@@ -11,48 +12,99 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'ClubTrack',
+  title = 'HackerRank Campus Crew',
   subtitle = 'Club Attendance System',
   onNewMeeting,
   onNewMember,
   activeTab,
 }) => {
+  const { isDark, colors, toggleTheme } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.cardBorder,
+        },
+      ]}
+    >
       <View style={styles.brandRow}>
-        <View style={styles.logoBadge}>
-          <Ionicons name="checkbox-outline" size={24} color="#FFFFFF" />
+        <View style={[styles.logoBadge, { backgroundColor: colors.primary }]}>
+          <Ionicons name="checkbox-outline" size={22} color="#FFFFFF" />
         </View>
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
-            <View style={styles.versionTag}>
-              <Text style={styles.versionText}>Web & App</Text>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+              {title}
+            </Text>
+            <View
+              style={[
+                styles.versionTag,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
+                  borderColor: isDark ? '#334155' : '#C7D2FE',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.versionText,
+                  { color: isDark ? '#A5B4FC' : '#4F46E5' },
+                ]}
+              >
+                PRO
+              </Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+            {subtitle}
+          </Text>
         </View>
       </View>
 
       <View style={styles.actionsRow}>
+        {/* Dark / Light Mode Toggle Button */}
+        <TouchableOpacity
+          style={[
+            styles.themeToggleBtn,
+            {
+              backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+              borderColor: isDark ? '#334155' : '#E2E8F0',
+            },
+          ]}
+          onPress={toggleTheme}
+          activeOpacity={0.7}
+          accessibilityLabel={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={isDark ? 'sunny' : 'moon'}
+            size={18}
+            color={isDark ? '#FBBF24' : '#6366F1'}
+          />
+        </TouchableOpacity>
+
+        {/* Desktop / Tablet Quick Actions (FAB provides access on mobile) */}
         {activeTab === 'meetings' && onNewMeeting && (
           <TouchableOpacity
-            style={styles.primaryActionButton}
+            style={[styles.primaryActionButton, { backgroundColor: colors.primary }]}
             onPress={onNewMeeting}
             activeOpacity={0.8}
           >
-            <Ionicons name="add-circle" size={18} color="#FFFFFF" />
+            <Ionicons name="add-circle" size={17} color="#FFFFFF" />
             <Text style={styles.primaryActionText}>+ New Meeting</Text>
           </TouchableOpacity>
         )}
 
         {activeTab === 'members' && onNewMember && (
           <TouchableOpacity
-            style={styles.primaryActionButton}
+            style={[styles.primaryActionButton, { backgroundColor: colors.primary }]}
             onPress={onNewMember}
             activeOpacity={0.8}
           >
-            <Ionicons name="person-add" size={18} color="#FFFFFF" />
+            <Ionicons name="person-add" size={17} color="#FFFFFF" />
             <Text style={styles.primaryActionText}>+ Add Member</Text>
           </TouchableOpacity>
         )}
@@ -63,92 +115,95 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 12 : 14,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: 12,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
   },
   logoBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#4F46E5', // Indigo
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   titleContainer: {
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flexWrap: 'nowrap',
   },
   title: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   versionTag: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
   versionText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    color: '#4F46E5',
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 12,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 1,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+  },
+  themeToggleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
     shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   primaryActionText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

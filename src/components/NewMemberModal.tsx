@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
 import { parseKeyValueText } from '../utils/csvParser';
+import { useTheme } from '../context/ThemeContext';
 
 interface NewMemberModalProps {
   visible: boolean;
@@ -54,6 +55,8 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
   onSubmit,
   onUpdate,
 }) => {
+  const { isDark, colors } = useTheme();
+
   const [name, setName] = useState('');
   const [raNo, setRaNo] = useState('');
   const [srmEmail, setSrmEmail] = useState('');
@@ -89,10 +92,11 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setFaEmail(initialMember.faEmail || '');
       setLinkedin(initialMember.linkedin || '');
       setGithub(initialMember.github || '');
-      setDomain(initialMember.domain || 'None');
+      setDomain(initialMember.domain || 'Technical');
       setRole(initialMember.role || 'Member');
       setPhone(initialMember.phone || '');
     } else {
+      // Clear form when opening empty modal
       setName('');
       setRaNo('');
       setSrmEmail('');
@@ -108,252 +112,333 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setDomain('Technical');
       setRole('Member');
       setPhone('');
+      setIsPasteBoxOpen(false);
+      setPasteText('');
+      setErrors({});
     }
-    setErrors({});
+  }, [initialMember, visible]);
+
+  // Handle parsing pasted multi-line block to auto-populate fields
+  const handleApplyPastedText = () => {
+    if (!pasteText.trim()) return;
+    const parsed = parseKeyValueText(pasteText);
+    if (parsed.name) setName(parsed.name);
+    if (parsed.raNo) setRaNo(parsed.raNo);
+    if (parsed.srmEmail) setSrmEmail(parsed.srmEmail);
+    if (parsed.personalEmail) setPersonalEmail(parsed.personalEmail);
+    if (parsed.branch) setBranch(parsed.branch);
+    if (parsed.department) setDepartment(parsed.department);
+    if (parsed.year) setYear(parsed.year);
+    if (parsed.section) setSection(parsed.section);
+    if (parsed.faName) setFaName(parsed.faName);
+    if (parsed.faEmail) setFaEmail(parsed.faEmail);
+    if (parsed.linkedin) setLinkedin(parsed.linkedin);
+    if (parsed.github) setGithub(parsed.github);
+    if (parsed.domain) setDomain(parsed.domain);
+    if (parsed.role) setRole(parsed.role);
+    if (parsed.phone) setPhone(parsed.phone);
+
     setIsPasteBoxOpen(false);
     setPasteText('');
-  }, [initialMember, visible]);
+  };
 
   const validate = () => {
     const errs: { [key: string]: string } = {};
-    if (!name.trim()) errs.name = 'Student name is required';
+    if (!name.trim()) errs.name = 'Full name is required';
+    if (!domain) errs.domain = 'Domain selection is required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
-  };
-
-  const handleApplyPasteText = () => {
-    if (!pasteText.trim()) return;
-    const extracted = parseKeyValueText(pasteText);
-    if (extracted.name) setName(extracted.name);
-    if (extracted.raNo) setRaNo(extracted.raNo);
-    if (extracted.srmEmail) setSrmEmail(extracted.srmEmail);
-    if (extracted.personalEmail) setPersonalEmail(extracted.personalEmail);
-    if (extracted.branch) setBranch(extracted.branch);
-    if (extracted.department) setDepartment(extracted.department);
-    if (extracted.year) setYear(extracted.year);
-    if (extracted.section) setSection(extracted.section);
-    if (extracted.faName) setFaName(extracted.faName);
-    if (extracted.faEmail) setFaEmail(extracted.faEmail);
-    if (extracted.linkedin) setLinkedin(extracted.linkedin);
-    if (extracted.github) setGithub(extracted.github);
-    if (extracted.domain) setDomain(extracted.domain);
-    if (extracted.role) setRole(extracted.role);
-    if (extracted.phone) setPhone(extracted.phone);
-    setIsPasteBoxOpen(false);
-    setPasteText('');
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    if (initialMember && onUpdate) {
-      await onUpdate(initialMember.id, {
-        name: name.trim(),
-        raNo: raNo.trim().toUpperCase() || undefined,
-        srmEmail: srmEmail.trim() || undefined,
-        personalEmail: personalEmail.trim() || undefined,
-        branch: branch.trim() || undefined,
-        department: department.trim() || undefined,
-        year: year || undefined,
-        section: section.trim().toUpperCase() || undefined,
-        faName: faName.trim() || undefined,
-        faEmail: faEmail.trim() || undefined,
-        linkedin: linkedin.trim() || undefined,
-        github: github.trim() || undefined,
-        domain: domain === 'None' ? 'None' : domain,
-        role: role.trim() || 'Member',
-        phone: phone.trim() || undefined,
-      });
-      onClose();
-      return;
-    }
-
-    const randomColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
-
-    onSubmit({
+    const memberPayload = {
       name: name.trim(),
-      raNo: raNo.trim().toUpperCase() || undefined,
+      raNo: raNo.trim() || undefined,
       srmEmail: srmEmail.trim() || undefined,
       personalEmail: personalEmail.trim() || undefined,
       branch: branch.trim() || undefined,
       department: department.trim() || undefined,
-      year: year || undefined,
-      section: section.trim().toUpperCase() || undefined,
+      year: year.trim() || undefined,
+      section: section.trim() || undefined,
       faName: faName.trim() || undefined,
       faEmail: faEmail.trim() || undefined,
       linkedin: linkedin.trim() || undefined,
       github: github.trim() || undefined,
-      domain: domain === 'None' ? 'None' : domain,
+      domain: domain as any,
       role: role.trim() || 'Member',
       phone: phone.trim() || undefined,
-      avatarColor: randomColor,
-      joinedDate: new Date().toISOString().split('T')[0],
-    });
+      avatarColor:
+        initialMember?.avatarColor ||
+        AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+    };
+
+    if (initialMember && onUpdate) {
+      await onUpdate(initialMember.id, memberPayload);
+    } else {
+      onSubmit(memberPayload);
+    }
 
     onClose();
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
           {/* Header */}
-          <View style={styles.modalHeader}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.modalTitle}>
-                {initialMember ? `Edit: ${initialMember.name}` : 'Add Crew Member'}
+          <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {initialMember ? 'Edit Member Details' : 'Add New Member'}
               </Text>
-              <Text style={styles.modalSubtitle}>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                 {initialMember
-                  ? 'Update academic info, contact, or paste details text to auto-fill'
-                  : 'Only name is required — other fields can be filled now or updated later'}
+                  ? `Update info for ${initialMember.name}`
+                  : 'Add a new member to the HRCC directory'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-            {/* Quick Auto-Fill Banner / Toggle */}
+          {/* Quick Paste Auto-Fill Dropdown */}
+          <View style={styles.pasteToggleRow}>
             <TouchableOpacity
-              style={styles.pasteToggleBtn}
+              style={[
+                styles.pasteToggleBtn,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#EEF2FF',
+                  borderColor: isDark ? '#334155' : '#C7D2FE',
+                },
+              ]}
               onPress={() => setIsPasteBoxOpen(!isPasteBoxOpen)}
               activeOpacity={0.7}
             >
-              <Ionicons name="flash" size={15} color="#4F46E5" />
-              <Text style={styles.pasteToggleText}>
+              <Ionicons
+                name={isPasteBoxOpen ? 'chevron-up-circle' : 'flash'}
+                size={14}
+                color={colors.primary}
+              />
+              <Text style={[styles.pasteToggleText, { color: colors.primary }]}>
                 {isPasteBoxOpen
                   ? 'Hide Text Auto-Fill Box'
                   : '⚡ Paste Details Text to Auto-Fill'}
               </Text>
-              <Ionicons
-                name={isPasteBoxOpen ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color="#4F46E5"
-              />
             </TouchableOpacity>
+          </View>
 
-            {isPasteBoxOpen && (
-              <View style={styles.pasteBoxContainer}>
-                <Text style={styles.pasteBoxHint}>
-                  Paste member details in any format (e.g. Name: ..., Reg.No: ..., SRM email: ...):
-                </Text>
-                <TextInput
-                  style={styles.pasteTextArea}
-                  multiline
-                  placeholder={`Name: ${name || 'Inesh Agarwal'}\nReg.No: RA2411003011496\nSRM email: ia3383@srmist.edu.in\nPersonal Email: name@gmail.com\nPursuing Branch: CSE\nDepartment: Computing\nFA name: Dr Vinod D\nFA email: drvinodd@srmist.edu.in\nLinkedIn: https://linkedin.com/in/username\nGitHub: https://github.com/username`}
-                  value={pasteText}
-                  onChangeText={setPasteText}
-                  placeholderTextColor="#94A3B8"
-                />
-                <TouchableOpacity
-                  style={[styles.applyPasteBtn, !pasteText.trim() && styles.applyPasteBtnDisabled]}
-                  onPress={handleApplyPasteText}
-                  disabled={!pasteText.trim()}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="checkmark-done" size={16} color="#FFFFFF" />
-                  <Text style={styles.applyPasteBtnText}>Apply Extracted Details</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+          {isPasteBoxOpen && (
+            <View
+              style={[
+                styles.pasteBoxContainer,
+                {
+                  backgroundColor: isDark ? '#111827' : '#F8FAFC',
+                  borderColor: colors.cardBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.pasteBoxHint, { color: colors.textSecondary }]}>
+                Paste key-value text lines (e.g. Name: ..., Reg.No: ..., Branch: ..., FA: ...):
+              </Text>
+              <TextInput
+                style={[
+                  styles.pasteTextArea,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE\nDomain: Technical\nRole: Lead`}
+                placeholderTextColor={colors.textMuted}
+                value={pasteText}
+                onChangeText={setPasteText}
+                multiline
+              />
+              <TouchableOpacity
+                style={[
+                  styles.applyPasteBtn,
+                  !pasteText.trim() && styles.applyPasteBtnDisabled,
+                ]}
+                onPress={handleApplyPastedText}
+                disabled={!pasteText.trim()}
+              >
+                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                <Text style={styles.applyPasteBtnText}>Apply & Auto-Fill Form Fields</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-            {/* 1. Full Name & Reg.No */}
+          <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
+            {/* 1. Name & Registration */}
             <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 3 }]}>
-                <Text style={styles.label}>
-                  Student Name <Text style={styles.required}>*</Text>
+              <View style={[styles.inputGroup, { flex: 1.2 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  Full Name <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  style={[styles.input, errors.name && styles.inputError]}
-                  placeholder="e.g. Purva Jain"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                    errors.name && styles.inputError,
+                  ]}
+                  placeholder="e.g. Purva Gupta"
                   value={name}
                   onChangeText={setName}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
-                {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
               </View>
 
-              <View style={[styles.inputGroup, { flex: 2 }]}>
-                <Text style={styles.label}>Reg.No (Optional)</Text>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Reg. No / RA No</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="RA241100301..."
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="e.g. RA2411003010123"
                   value={raNo}
                   onChangeText={setRaNo}
                   autoCapitalize="characters"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
-            {/* 2. SRM Email & Personal Email */}
+            {/* 2. Emails */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>SRM Email (Optional)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>SRM Email ID</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. pj1234@srmist.edu.in"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="ab1234@srmist.edu.in"
                   value={srmEmail}
                   onChangeText={setSrmEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Personal Email (Optional)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Personal Email</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. name@gmail.com"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="john@gmail.com"
                   value={personalEmail}
                   onChangeText={setPersonalEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
-            {/* 3. Pursuing Branch & Department */}
+            {/* 3. Branch & Department */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Pursuing Branch (Optional)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Pursuing Branch</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. B.Tech CSE / IT"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="e.g. CSE Core, DS, AIML"
                   value={branch}
                   onChangeText={setBranch}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Department (Optional)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Department</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Computing / C.Tech"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="e.g. C.Tech, NWC, SWE"
                   value={department}
                   onChangeText={setDepartment}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
             {/* 4. Year & Section */}
             <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 2 }]}>
-                <Text style={styles.label}>Year</Text>
+              <View style={[styles.inputGroup, { flex: 1.2 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Year of Study</Text>
                 <View style={styles.chipsRow}>
                   {YEAR_OPTIONS.map((y) => (
                     <TouchableOpacity
                       key={y}
-                      style={[styles.chip, year === y && styles.chipActive]}
+                      style={[
+                        styles.miniChip,
+                        {
+                          backgroundColor:
+                            year === y
+                              ? colors.primary
+                              : isDark
+                              ? '#1E293B'
+                              : '#F1F5F9',
+                          borderColor:
+                            year === y ? colors.primary : colors.cardBorder,
+                        },
+                      ]}
                       onPress={() => setYear(y)}
                     >
-                      <Text style={[styles.chipText, year === y && styles.chipTextActive]}>
+                      <Text
+                        style={[
+                          styles.miniChipText,
+                          {
+                            color: year === y ? '#FFFFFF' : colors.textSecondary,
+                            fontWeight: year === y ? '700' : '500',
+                          },
+                        ]}
+                      >
                         {y}
                       </Text>
                     </TouchableOpacity>
@@ -361,78 +446,78 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 </View>
               </View>
 
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Section</Text>
+              <View style={[styles.inputGroup, { flex: 0.8 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Section</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. C2"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
+                  placeholder="e.g. G1, F2"
                   value={section}
                   onChangeText={setSection}
-                  autoCapitalize="characters"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
-            {/* 5. FA Name & FA Email */}
+            {/* 5. LinkedIn & GitHub */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>FA Name (Optional)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>LinkedIn Profile / Handle</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Dr Vinod D"
-                  value={faName}
-                  onChangeText={setFaName}
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
-
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>FA Email</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. vinodd@srmist.edu.in"
-                  value={faEmail}
-                  onChangeText={setFaEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
-            </View>
-
-            {/* 6. LinkedIn & GitHub */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>LinkedIn Profile / Handle</Text>
-                <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
                   placeholder="linkedin.com/in/username"
                   value={linkedin}
                   onChangeText={setLinkedin}
                   autoCapitalize="none"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>GitHub Profile / Handle</Text>
+                <Text style={[styles.label, { color: colors.text }]}>GitHub Profile / Handle</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.text,
+                    },
+                  ]}
                   placeholder="github.com/username"
                   value={github}
                   onChangeText={setGithub}
                   autoCapitalize="none"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
-            {/* 7. Club Role & Domain */}
+            {/* 6. Club Role & Domain */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Club Role / Designation</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Club Role / Designation</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="e.g. Tech Head, Vice President, Lead, Member"
                 value={role}
                 onChangeText={(val) => {
@@ -448,13 +533,25 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                     setDomain('Corporate');
                   }
                 }}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
               />
               <View style={[styles.chipsRow, { marginTop: 6 }]}>
                 {ROLE_SUGGESTIONS.map((r) => (
                   <TouchableOpacity
                     key={r}
-                    style={[styles.miniChip, role === r && styles.miniChipActive]}
+                    style={[
+                      styles.miniChip,
+                      {
+                        backgroundColor:
+                          role === r
+                            ? colors.primary
+                            : isDark
+                            ? '#1E293B'
+                            : '#F1F5F9',
+                        borderColor:
+                          role === r ? colors.primary : colors.cardBorder,
+                      },
+                    ]}
                     onPress={() => {
                       setRole(r);
                       if (
@@ -476,7 +573,10 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                     <Text
                       style={[
                         styles.miniChipText,
-                        role === r && styles.miniChipTextActive,
+                        {
+                          color: role === r ? '#FFFFFF' : colors.textSecondary,
+                          fontWeight: role === r ? '700' : '500',
+                        },
                       ]}
                     >
                       {r}
@@ -488,17 +588,37 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 
             {/* Domain Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
+              <Text style={[styles.label, { color: colors.text }]}>
                 Club Domain {domain === 'None' && '(Not Applicable for President / VP / Core)'}
               </Text>
               <View style={styles.chipsRow}>
                 {DOMAIN_OPTIONS.map((d) => (
                   <TouchableOpacity
                     key={d}
-                    style={[styles.chip, domain === d && styles.chipActive]}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor:
+                          domain === d
+                            ? colors.primary
+                            : isDark
+                            ? '#1E293B'
+                            : '#F1F5F9',
+                        borderColor:
+                          domain === d ? colors.primary : colors.cardBorder,
+                      },
+                    ]}
                     onPress={() => setDomain(d)}
                   >
-                    <Text style={[styles.chipText, domain === d && styles.chipTextActive]}>
+                    <Text
+                      style={[
+                        styles.chipText,
+                        {
+                          color: domain === d ? '#FFFFFF' : colors.textSecondary,
+                          fontWeight: domain === d ? '700' : '600',
+                        },
+                      ]}
+                    >
                       {d === 'None' ? 'None (President / VP)' : d}
                     </Text>
                   </TouchableOpacity>
@@ -508,26 +628,45 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 
             {/* Phone */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone (Optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Phone Number (Optional)</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="+91 98765 43210"
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
               />
             </View>
           </ScrollView>
 
           {/* Modal Actions */}
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
+          <View style={[styles.modalActions, { borderTopColor: colors.cardBorder }]}>
+            <TouchableOpacity
+              style={[
+                styles.cancelBtn,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                },
+              ]}
+              onPress={onClose}
+            >
+              <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
-              <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: colors.primary }]}
+              onPress={handleSubmit}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="checkmark-circle" size={17} color="#FFFFFF" />
               <Text style={styles.submitText}>
                 {initialMember ? 'Save Changes' : 'Save Member'}
               </Text>
@@ -542,18 +681,17 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 620,
+    maxWidth: 600,
     maxHeight: '92%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -564,184 +702,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingBottom: 14,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
   },
   modalSubtitle: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
     padding: 4,
   },
-  formScroll: {
-    marginTop: 14,
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 6,
-  },
-  required: {
-    color: '#EF4444',
-  },
-  input: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 9 : 7,
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  inputError: {
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
-  },
-  errorText: {
-    fontSize: 11,
-    color: '#EF4444',
-    marginTop: 3,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  chip: {
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  chipActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  chipTextActive: {
-    color: '#FFFFFF',
-  },
-  miniChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  miniChipActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#C7D2FE',
-  },
-  miniChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  miniChipTextActive: {
-    color: '#4F46E5',
-    fontWeight: '700',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+  pasteToggleRow: {
     marginTop: 10,
-  },
-  cancelBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-  },
-  cancelText: {
-    fontSize: 13,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    backgroundColor: '#4F46E5',
-  },
-  submitText: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    fontWeight: '700',
+    marginBottom: 6,
   },
   pasteToggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    borderRadius: 8,
-    paddingVertical: 8,
+    gap: 6,
     paddingHorizontal: 12,
-    marginBottom: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
   },
   pasteToggleText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
-    flex: 1,
-    marginLeft: 6,
   },
   pasteBoxContainer: {
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
     borderRadius: 10,
-    padding: 12,
-    marginBottom: 14,
+    padding: 10,
+    marginBottom: 10,
   },
   pasteBoxHint: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
     marginBottom: 6,
   },
   pasteTextArea: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 8,
-    padding: 10,
-    fontSize: 12,
-    color: '#0F172A',
-    minHeight: 110,
-    maxHeight: 180,
+    padding: 8,
+    fontSize: 11.5,
+    minHeight: 90,
+    maxHeight: 160,
     textAlignVertical: 'top',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     marginBottom: 8,
@@ -752,7 +762,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#059669',
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 6,
   },
   applyPasteBtnDisabled: {
@@ -762,5 +772,91 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  formScroll: {
+    marginTop: 8,
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 5,
+  },
+  required: {
+    color: '#EF4444',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
+    fontSize: 13,
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  errorText: {
+    fontSize: 11,
+    color: '#EF4444',
+    marginTop: 2,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  miniChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  miniChipText: {
+    fontSize: 11,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    paddingTop: 12,
+    marginTop: 8,
+    borderTopWidth: 1,
+  },
+  cancelBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  cancelText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  submitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  submitText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

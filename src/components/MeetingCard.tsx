@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Meeting, AttendanceRecord, AttendanceSummary } from '../types';
 import { calculateMeetingSummary } from '../storage/storage';
+import { useTheme } from '../context/ThemeContext';
 
 interface MeetingCardProps {
   meeting: Meeting;
@@ -21,6 +22,7 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
   onShare,
   onDelete,
 }) => {
+  const { isDark, colors } = useTheme();
   const summary: AttendanceSummary = calculateMeetingSummary(attendanceRecord, totalMembersCount);
   const hasAttendance = attendanceRecord && Object.keys(attendanceRecord.statuses || {}).length > 0;
 
@@ -50,39 +52,52 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
   };
 
   return (
-    <View style={styles.card}>
-      {/* Top Header: Title & Status */}
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.cardBorder,
+        },
+      ]}
+    >
+      {/* Top Header: Title & Meta */}
       <View style={styles.cardHeader}>
         <View style={styles.titleArea}>
-          <Text style={styles.title}>{meeting.title}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{meeting.title}</Text>
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <Ionicons name="calendar-outline" size={14} color="#64748B" />
-              <Text style={styles.metaText}>{formatDate(meeting.date)}</Text>
+              <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(meeting.date)}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Ionicons name="time-outline" size={14} color="#64748B" />
-              <Text style={styles.metaText}>{meeting.time}</Text>
+              <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{meeting.time}</Text>
             </View>
           </View>
           <View style={styles.locationItem}>
-            <Ionicons name="location-outline" size={14} color="#64748B" />
-            <Text style={styles.locationText}>{meeting.location}</Text>
+            <Ionicons name="location-outline" size={13} color={colors.textMuted} />
+            <Text style={[styles.locationText, { color: colors.textSecondary }]}>{meeting.location}</Text>
           </View>
         </View>
 
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[
+            styles.deleteButton,
+            {
+              backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+            },
+          ]}
           onPress={() => onDelete(meeting.id)}
           accessibilityLabel="Delete Meeting"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="trash-outline" size={18} color="#94A3B8" />
+          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
       {meeting.description ? (
-        <Text style={styles.description} numberOfLines={2}>
+        <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
           {meeting.description}
         </Text>
       ) : null}
@@ -93,21 +108,31 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
           <>
             <View style={styles.statsHeaderRow}>
               <View style={styles.statsPillRow}>
-                <View style={[styles.badgePill, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                  <Text style={[styles.badgePillText, { color: '#047857' }]}>
+                <View
+                  style={[
+                    styles.badgePill,
+                    {
+                      backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                      borderColor: isDark ? '#047857' : '#A7F3D0',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.badgePillText, { color: isDark ? '#34D399' : '#047857' }]}>
                     🟢 {summary.present} Present
                   </Text>
                 </View>
-                {summary.late > 0 && (
-                  <View style={[styles.badgePill, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
-                    <Text style={[styles.badgePillText, { color: '#B45309' }]}>
-                      🟡 {summary.late} Late
-                    </Text>
-                  </View>
-                )}
+
                 {summary.absent > 0 && (
-                  <View style={[styles.badgePill, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-                    <Text style={[styles.badgePillText, { color: '#B91C1C' }]}>
+                  <View
+                    style={[
+                      styles.badgePill,
+                      {
+                        backgroundColor: isDark ? '#450A0A' : '#FEF2F2',
+                        borderColor: isDark ? '#991B1B' : '#FECACA',
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.badgePillText, { color: isDark ? '#FCA5A5' : '#B91C1C' }]}>
                       🔴 {summary.absent} Absent
                     </Text>
                   </View>
@@ -123,12 +148,17 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
                 >
                   {summary.percentage}%
                 </Text>
-                <Text style={styles.percentageLabel}>Turnout</Text>
+                <Text style={[styles.percentageLabel, { color: colors.textMuted }]}>Turnout</Text>
               </View>
             </View>
 
             {/* Progress Bar */}
-            <View style={styles.progressBarBackground}>
+            <View
+              style={[
+                styles.progressBarBackground,
+                { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' },
+              ]}
+            >
               <View
                 style={[
                   styles.progressBarFill,
@@ -141,10 +171,18 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
             </View>
           </>
         ) : (
-          <View style={styles.unmarkedNotice}>
-            <Ionicons name="alert-circle-outline" size={16} color="#F59E0B" />
-            <Text style={styles.unmarkedText}>
-              Attendance not taken yet • {totalMembersCount} members to mark
+          <View
+            style={[
+              styles.unmarkedNotice,
+              {
+                backgroundColor: isDark ? '#231D12' : '#FFFBEB',
+                borderColor: isDark ? '#78350F' : '#FDE68A',
+              },
+            ]}
+          >
+            <Ionicons name="alert-circle-outline" size={15} color="#F59E0B" />
+            <Text style={[styles.unmarkedText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+              Attendance not taken • {totalMembersCount} members to roll call
             </Text>
           </View>
         )}
@@ -153,13 +191,13 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
       {/* Action Buttons */}
       <View style={styles.cardActions}>
         <TouchableOpacity
-          style={styles.rollCallButton}
+          style={[styles.rollCallButton, { backgroundColor: colors.primary }]}
           onPress={() => onOpenRollCall(meeting)}
           activeOpacity={0.8}
         >
           <Ionicons
             name={hasAttendance ? 'create-outline' : 'checkmark-circle-outline'}
-            size={18}
+            size={17}
             color="#FFFFFF"
           />
           <Text style={styles.rollCallButtonText}>
@@ -169,12 +207,18 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
 
         {hasAttendance && (
           <TouchableOpacity
-            style={styles.shareButton}
+            style={[
+              styles.shareButton,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                borderColor: colors.cardBorder,
+              },
+            ]}
             onPress={() => onShare(meeting)}
             activeOpacity={0.7}
           >
-            <Ionicons name="share-social-outline" size={17} color="#4F46E5" />
-            <Text style={styles.shareButtonText}>Share Report</Text>
+            <Ionicons name="share-social-outline" size={16} color={colors.primary} />
+            <Text style={[styles.shareButtonText, { color: colors.primary }]}>Share</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -184,38 +228,37 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
     elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 10,
   },
   titleArea: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 8,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
     marginBottom: 6,
   },
   metaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 12,
+    flexWrap: 'wrap',
     marginBottom: 4,
   },
   metaItem: {
@@ -224,8 +267,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 12,
     fontWeight: '500',
   },
   locationItem: {
@@ -235,40 +277,37 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   locationText: {
-    fontSize: 13,
-    color: '#475569',
+    fontSize: 12,
     fontWeight: '500',
   },
   deleteButton: {
-    padding: 6,
-    borderRadius: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   description: {
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18,
-    marginTop: 10,
-    backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: 8,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 12,
   },
   statsSection: {
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    marginVertical: 6,
   },
   statsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   statsPillRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 6,
-    flex: 1,
+    flexWrap: 'wrap',
   },
   badgePill: {
     paddingHorizontal: 8,
@@ -277,54 +316,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   badgePillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   percentageContainer: {
-    alignItems: 'flex-end',
-    marginLeft: 8,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
   },
   percentageNumber: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '800',
   },
   percentageLabel: {
-    fontSize: 10,
-    color: '#94A3B8',
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: '500',
   },
   progressBarBackground: {
-    height: 7,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
   unmarkedNotice: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 10,
     paddingVertical: 8,
-    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FEF3C7',
   },
   unmarkedText: {
     fontSize: 12,
-    color: '#B45309',
     fontWeight: '600',
+    flex: 1,
   },
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 14,
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E2E8F0',
   },
   rollCallButton: {
     flex: 1,
@@ -332,29 +370,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#4F46E5',
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 9,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
   },
   rollCallButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 8,
-    backgroundColor: '#EEF2FF',
+    paddingVertical: 10,
+    borderRadius: 9,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
   shareButtonText: {
-    color: '#4F46E5',
     fontSize: 13,
     fontWeight: '700',
   },
