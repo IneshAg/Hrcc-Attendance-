@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -22,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   isRefreshing = false,
 }) => {
   const { isDark, colors, toggleTheme } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isNarrow = windowWidth < 520;
 
   return (
     <View
@@ -30,18 +39,28 @@ export const Header: React.FC<HeaderProps> = ({
         {
           backgroundColor: colors.surface,
           borderBottomColor: colors.cardBorder,
+          paddingHorizontal: isNarrow ? 12 : 16,
         },
       ]}
     >
       <View style={styles.brandRow}>
         {/* HackerRank Icon Mark */}
-        <View style={[styles.logoBadge, { backgroundColor: isDark ? '#05C770' : '#049D57' }]}>
-          <Text style={styles.logoBadgeText}>H</Text>
+        <View
+          style={[
+            styles.logoBadge,
+            {
+              backgroundColor: isDark ? '#05C770' : '#049D57',
+              width: isNarrow ? 32 : 36,
+              height: isNarrow ? 32 : 36,
+            },
+          ]}
+        >
+          <Text style={[styles.logoBadgeText, isNarrow && { fontSize: 17 }]}>H</Text>
         </View>
 
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.titleText} numberOfLines={1}>
+            <Text style={[styles.titleText, isNarrow && { fontSize: 15 }]} numberOfLines={1}>
               <Text style={{ color: colors.text }}>HackerRank </Text>
               <Text style={{ color: colors.brandGreen }}>CampusCrew</Text>
             </Text>
@@ -64,13 +83,20 @@ export const Header: React.FC<HeaderProps> = ({
               </Text>
             </View>
           </View>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.subtitle,
+              { color: colors.textSecondary },
+              isNarrow && { fontSize: 10.5 },
+            ]}
+            numberOfLines={1}
+          >
             {subtitle}
           </Text>
         </View>
       </View>
 
-      <View style={styles.actionsRow}>
+      <View style={[styles.actionsRow, isNarrow && { gap: 6 }]}>
         {/* Sync / Refresh Cloud Data Button */}
         {onRefresh && (
           <TouchableOpacity
@@ -79,6 +105,8 @@ export const Header: React.FC<HeaderProps> = ({
               {
                 backgroundColor: isDark ? '#161E19' : '#ECFDF5',
                 borderColor: isDark ? '#26362C' : '#A7F3D0',
+                width: isNarrow ? 32 : 36,
+                height: isNarrow ? 32 : 36,
               },
             ]}
             onPress={onRefresh}
@@ -88,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Ionicons
               name={isRefreshing ? 'sync' : 'refresh'}
-              size={17}
+              size={isNarrow ? 15 : 17}
               color={isDark ? colors.brandGreen : colors.primary}
             />
           </TouchableOpacity>
@@ -101,6 +129,8 @@ export const Header: React.FC<HeaderProps> = ({
             {
               backgroundColor: isDark ? '#161E19' : '#F1F5F9',
               borderColor: isDark ? '#26362C' : '#E2E8F0',
+              width: isNarrow ? 32 : 36,
+              height: isNarrow ? 32 : 36,
             },
           ]}
           onPress={toggleTheme}
@@ -110,44 +140,58 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Ionicons
             name={isDark ? 'sunny' : 'moon'}
-            size={18}
+            size={isNarrow ? 16 : 18}
             color={isDark ? '#05C770' : '#475569'}
           />
         </TouchableOpacity>
 
-        {/* Desktop / Tablet Quick Actions */}
+        {/* Quick Actions (Add Meeting / Add Member) */}
         {activeTab === 'meetings' && onNewMeeting && (
           <TouchableOpacity
-            style={[styles.primaryActionButton, { backgroundColor: colors.primary }]}
+            style={[
+              styles.primaryActionButton,
+              {
+                backgroundColor: colors.primary,
+                paddingHorizontal: isNarrow ? 10 : 13,
+                height: isNarrow ? 32 : 36,
+              },
+            ]}
             onPress={onNewMeeting}
             activeOpacity={0.8}
           >
-            <Ionicons name="add-circle" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+            <Ionicons name="add" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
             <Text
               style={[
                 styles.primaryActionText,
                 { color: isDark ? '#070707' : '#FFFFFF' },
               ]}
             >
-              + New Meeting
+              {isNarrow ? 'Meeting' : '+ New Meeting'}
             </Text>
           </TouchableOpacity>
         )}
 
         {activeTab === 'members' && onNewMember && (
           <TouchableOpacity
-            style={[styles.primaryActionButton, { backgroundColor: colors.primary }]}
+            style={[
+              styles.primaryActionButton,
+              {
+                backgroundColor: colors.primary,
+                paddingHorizontal: isNarrow ? 10 : 13,
+                height: isNarrow ? 32 : 36,
+              },
+            ]}
             onPress={onNewMember}
             activeOpacity={0.8}
           >
-            <Ionicons name="person-add" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
+            <Ionicons name="person-add" size={14} color={isDark ? '#070707' : '#FFFFFF'} />
             <Text
               style={[
                 styles.primaryActionText,
                 { color: isDark ? '#070707' : '#FFFFFF' },
               ]}
             >
-              + Add Member
+              {isNarrow ? 'Member' : '+ Add Member'}
             </Text>
           </TouchableOpacity>
         )}
@@ -158,25 +202,22 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 12 : 14,
-    paddingBottom: 14,
+    paddingTop: Platform.OS === 'ios' ? 12 : 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
     minWidth: 0,
   },
   logoBadge: {
-    width: 36,
-    height: 36,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -204,23 +245,23 @@ const styles = StyleSheet.create({
     flexWrap: 'nowrap',
   },
   titleText: {
-    fontSize: 17,
+    fontSize: 16.5,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   versionTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
     borderRadius: 4,
     borderWidth: 1,
   },
   versionText: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -230,8 +271,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   themeToggleBtn: {
-    width: 36,
-    height: 36,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
@@ -240,9 +279,8 @@ const styles = StyleSheet.create({
   primaryActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    gap: 5,
     borderRadius: 8,
     shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },

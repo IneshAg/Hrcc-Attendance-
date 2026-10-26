@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  useWindowDimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Meeting } from '../types';
@@ -21,6 +23,9 @@ interface NewMeetingModalProps {
 
 export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClose, onSubmit }) => {
   const { isDark, colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobile = windowWidth < 600;
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [title, setTitle] = useState('');
@@ -65,25 +70,57 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.modalOverlay,
+            justifyContent: isMobile ? 'flex-end' : 'center',
+            padding: isMobile ? 0 : 16,
+          },
+        ]}
+      >
         <View
           style={[
             styles.modalCard,
             {
               backgroundColor: colors.surface,
               borderColor: colors.cardBorder,
+              maxWidth: isMobile ? '100%' : 540,
+              maxHeight: isMobile ? '92%' : '88%',
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              borderBottomLeftRadius: isMobile ? 0 : 22,
+              borderBottomRightRadius: isMobile ? 0 : 22,
+              paddingHorizontal: isMobile ? 16 : 22,
+              paddingTop: isMobile ? 12 : 20,
+              paddingBottom: isMobile ? (Platform.OS === 'ios' ? 32 : 18) : 20,
+              borderBottomWidth: isMobile ? 0 : 1,
             },
           ]}
         >
+          {/* Mobile Sheet Drag Handle */}
+          {isMobile && (
+            <View style={styles.dragHandleContainer}>
+              <View
+                style={[
+                  styles.dragHandle,
+                  { backgroundColor: isDark ? '#26362C' : '#CBD5E1' },
+                ]}
+              />
+            </View>
+          )}
+
           {/* Header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Schedule New Meeting</Text>
               <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                Create meeting session for taking roll call
+                Create a session for club attendance & roll call
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -113,8 +150,8 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
             </View>
 
             {/* Date & Time */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>
                   Date (YYYY-MM-DD) <Text style={styles.required}>*</Text>
                 </Text>
@@ -136,7 +173,7 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
                 {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
               </View>
 
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>
                   Time <Text style={styles.required}>*</Text>
                 </Text>
@@ -198,44 +235,57 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
                 placeholder="Discussing upcoming hackathon tracks, responsibilities, and schedule"
                 value={description}
                 onChangeText={setDescription}
-                placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={3}
+                placeholderTextColor={colors.textMuted}
               />
             </View>
           </ScrollView>
 
-          {/* Footer Actions */}
-          <View style={[styles.modalFooter, { borderTopColor: colors.cardBorder }]}>
+          {/* Modal Footer */}
+          <View
+            style={[
+              styles.modalFooter,
+              {
+                borderTopColor: colors.cardBorder,
+                flexDirection: isMobile ? 'row' : 'row',
+                justifyContent: isMobile ? 'space-between' : 'flex-end',
+              },
+            ]}
+          >
             <TouchableOpacity
               style={[
                 styles.cancelButton,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                  backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                  flex: isMobile ? 1 : undefined,
                 },
               ]}
               onPress={onClose}
+              activeOpacity={0.7}
             >
               <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: colors.primary }]}
+              style={[
+                styles.submitButton,
+                {
+                  backgroundColor: colors.primary,
+                  flex: isMobile ? 1.4 : undefined,
+                },
+              ]}
               onPress={handleSubmit}
+              activeOpacity={0.8}
             >
-              <Ionicons name="calendar" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
-              <Text
-                style={[
-                  styles.submitButtonText,
-                  { color: isDark ? '#070707' : '#FFFFFF', fontWeight: '800' },
-                ]}
-              >
+              <Ionicons name="calendar" size={16} color={isDark ? '#070707' : '#FFFFFF'} />
+              <Text style={[styles.submitButtonText, { color: isDark ? '#070707' : '#FFFFFF' }]}>
                 Create Meeting
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -243,53 +293,64 @@ export const NewMeetingModal: React.FC<NewMeetingModalProps> = ({ visible, onClo
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 520,
-    maxHeight: '90%',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  dragHandle: {
+    width: 38,
+    height: 4.5,
+    borderRadius: 3,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingBottom: 14,
+    paddingBottom: 12,
     borderBottomWidth: 1,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17.5,
     fontWeight: '800',
+    letterSpacing: -0.2,
   },
   modalSubtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     marginTop: 2,
+    lineHeight: 16,
   },
   closeBtn: {
-    padding: 4,
+    padding: 6,
   },
   formScroll: {
-    marginTop: 14,
+    marginTop: 12,
   },
   inputGroup: {
     marginBottom: 12,
+    width: '100%',
+  },
+  mobileStack: {
+    flexDirection: 'column',
+    width: '100%',
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    width: '100%',
   },
   label: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     marginBottom: 6,
   },
@@ -298,13 +359,15 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
-    fontSize: 13,
+    height: 44,
+    fontSize: 13.5,
   },
   textArea: {
-    minHeight: 70,
+    minHeight: 80,
+    height: 'auto',
+    paddingTop: 10,
     textAlignVertical: 'top',
   },
   inputError: {
@@ -317,37 +380,39 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: 10,
-    paddingTop: 14,
-    marginTop: 10,
+    paddingTop: 12,
+    marginTop: 6,
     borderTopWidth: 1,
   },
   cancelButton: {
+    height: 44,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitButton: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     shadowColor: '#05C770',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
   },
   submitButtonText: {
-    color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

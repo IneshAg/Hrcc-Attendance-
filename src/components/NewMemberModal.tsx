@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  useWindowDimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
@@ -99,6 +101,8 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
   onUpdate,
 }) => {
   const { isDark, colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobile = windowWidth < 620;
 
   const [name, setName] = useState('');
   const [raNo, setRaNo] = useState('');
@@ -115,6 +119,11 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
   const [domain, setDomain] = useState('Technical');
   const [role, setRole] = useState('Member');
   const [phone, setPhone] = useState('');
+
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const toggleDropdown = (field: string) => {
+    setActiveDropdown((prev) => (prev === field ? null : field));
+  };
 
   const [autoYearNotice, setAutoYearNotice] = useState<string | null>(null);
   const [isPasteBoxOpen, setIsPasteBoxOpen] = useState(false);
@@ -140,8 +149,8 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setRole(initialMember.role || 'Member');
       setPhone(initialMember.phone || '');
       setAutoYearNotice(null);
+      setActiveDropdown(null);
     } else {
-      // Clear form when opening empty modal
       setName('');
       setRaNo('');
       setSrmEmail('');
@@ -158,6 +167,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
       setRole('Member');
       setPhone('');
       setAutoYearNotice(null);
+      setActiveDropdown(null);
       setIsPasteBoxOpen(false);
       setPasteText('');
       setErrors({});
@@ -262,19 +272,51 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.modalOverlay,
+            justifyContent: isMobile ? 'flex-end' : 'center',
+            padding: isMobile ? 0 : 16,
+          },
+        ]}
+      >
         <View
           style={[
             styles.modalCard,
             {
               backgroundColor: colors.surface,
               borderColor: colors.cardBorder,
+              maxWidth: isMobile ? '100%' : 620,
+              maxHeight: isMobile ? '92%' : '88%',
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              borderBottomLeftRadius: isMobile ? 0 : 22,
+              borderBottomRightRadius: isMobile ? 0 : 22,
+              paddingHorizontal: isMobile ? 16 : 22,
+              paddingTop: isMobile ? 12 : 20,
+              paddingBottom: isMobile ? (Platform.OS === 'ios' ? 32 : 18) : 20,
+              borderBottomWidth: isMobile ? 0 : 1,
             },
           ]}
         >
+          {/* Mobile Sheet Drag Handle */}
+          {isMobile && (
+            <View style={styles.dragHandleContainer}>
+              <View
+                style={[
+                  styles.dragHandle,
+                  { backgroundColor: isDark ? '#26362C' : '#CBD5E1' },
+                ]}
+              />
+            </View>
+          )}
+
           {/* Header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {initialMember ? 'Edit Member Details' : 'Add New Member'}
               </Text>
@@ -282,7 +324,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 Select from dropdowns or type manually to customize any detail
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -363,10 +405,14 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
             </View>
           )}
 
-          <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.formScroll}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.formContent}
+          >
             {/* 1. Name & Registration */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1.2 }]}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1.2 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>
                   Full Name <Text style={styles.required}>*</Text>
                 </Text>
@@ -390,7 +436,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 {errors.name ? <Text style={[styles.errorText, { color: colors.danger }]}>{errors.name}</Text> : null}
               </View>
 
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <View style={styles.labelRow}>
                   <Text style={[styles.label, { color: colors.text }]}>Reg. No / RA No</Text>
                   {autoYearNotice && (
@@ -421,31 +467,35 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
             </View>
 
             {/* 2. Branch & Department with Dropdown & Manual Input */}
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={!isMobile && { flex: 1 }}>
                 <DropdownInput
                   label="Pursuing Branch"
                   value={branch}
                   onChangeText={setBranch}
                   options={BRANCH_OPTIONS}
                   placeholder="e.g. CSE Core, AIML"
+                  isOpen={activeDropdown === 'branch'}
+                  onToggle={() => toggleDropdown('branch')}
                 />
               </View>
 
-              <View style={{ flex: 1 }}>
+              <View style={!isMobile && { flex: 1 }}>
                 <DropdownInput
                   label="Department"
                   value={department}
                   onChangeText={setDepartment}
                   options={DEPARTMENT_OPTIONS}
                   placeholder="e.g. C.Tech, NWC"
+                  isOpen={activeDropdown === 'department'}
+                  onToggle={() => toggleDropdown('department')}
                 />
               </View>
             </View>
 
             {/* 3. Year of Study & Section with Dropdown & Manual Input */}
-            <View style={styles.row}>
-              <View style={{ flex: 1.2 }}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={!isMobile && { flex: 1.2 }}>
                 <DropdownInput
                   label="Year of Study"
                   value={year}
@@ -455,10 +505,12 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                   helperText={
                     raNo ? `(RA24=3rd, RA25=2nd, RA26=1st)` : undefined
                   }
+                  isOpen={activeDropdown === 'year'}
+                  onToggle={() => toggleDropdown('year')}
                 />
               </View>
 
-              <View style={{ flex: 0.8 }}>
+              <View style={!isMobile && { flex: 0.8 }}>
                 <DropdownInput
                   label="Section"
                   value={section}
@@ -466,13 +518,15 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                   options={SECTION_OPTIONS}
                   placeholder="e.g. G1, F2"
                   autoCapitalize="characters"
+                  isOpen={activeDropdown === 'section'}
+                  onToggle={() => toggleDropdown('section')}
                 />
               </View>
             </View>
 
             {/* 4. Club Role & Domain with Dropdown & Manual Input */}
-            <View style={styles.row}>
-              <View style={{ flex: 1.2 }}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={!isMobile && { flex: 1.2 }}>
                 <DropdownInput
                   label="Club Role / Designation"
                   value={role}
@@ -480,10 +534,12 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                   onSelectOption={handleRoleSelect}
                   options={ROLE_OPTIONS}
                   placeholder="e.g. Technical Head"
+                  isOpen={activeDropdown === 'role'}
+                  onToggle={() => toggleDropdown('role')}
                 />
               </View>
 
-              <View style={{ flex: 1 }}>
+              <View style={!isMobile && { flex: 1 }}>
                 <DropdownInput
                   label="Club Domain"
                   required
@@ -492,13 +548,15 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                   options={DOMAIN_OPTIONS}
                   placeholder="Technical, Creatives..."
                   error={errors.domain}
+                  isOpen={activeDropdown === 'domain'}
+                  onToggle={() => toggleDropdown('domain')}
                 />
               </View>
             </View>
 
             {/* 5. Emails */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>SRM Email ID</Text>
                 <View
                   style={[
@@ -521,7 +579,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 </View>
               </View>
 
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>Personal Email</Text>
                 <View
                   style={[
@@ -546,8 +604,8 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
             </View>
 
             {/* 6. LinkedIn & GitHub */}
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>LinkedIn Profile / Handle</Text>
                 <View
                   style={[
@@ -569,7 +627,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                 </View>
               </View>
 
-              <View style={[styles.inputGroup, { flex: 1 }]}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>GitHub Profile / Handle</Text>
                 <View
                   style={[
@@ -617,21 +675,38 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
           </ScrollView>
 
           {/* Modal Actions */}
-          <View style={[styles.modalActions, { borderTopColor: colors.cardBorder }]}>
+          <View
+            style={[
+              styles.modalActions,
+              {
+                borderTopColor: colors.cardBorder,
+                flexDirection: isMobile ? 'row' : 'row',
+                justifyContent: isMobile ? 'space-between' : 'flex-end',
+              },
+            ]}
+          >
             <TouchableOpacity
               style={[
                 styles.cancelBtn,
                 {
                   backgroundColor: isDark ? '#161E19' : '#F1F5F9',
+                  flex: isMobile ? 1 : undefined,
                 },
               ]}
               onPress={onClose}
+              activeOpacity={0.7}
             >
               <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: colors.primary }]}
+              style={[
+                styles.submitBtn,
+                {
+                  backgroundColor: colors.primary,
+                  flex: isMobile ? 1.4 : undefined,
+                },
+              ]}
               onPress={handleSubmit}
               activeOpacity={0.8}
             >
@@ -647,7 +722,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -655,22 +730,25 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 14,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 620,
-    maxHeight: '94%',
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  dragHandle: {
+    width: 38,
+    height: 4.5,
+    borderRadius: 3,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -680,15 +758,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   modalTitle: {
-    fontSize: 17,
+    fontSize: 17.5,
     fontWeight: '800',
+    letterSpacing: -0.2,
   },
   modalSubtitle: {
     fontSize: 11.5,
     marginTop: 2,
+    lineHeight: 16,
   },
   closeBtn: {
-    padding: 4,
+    padding: 6,
   },
   pasteToggleRow: {
     marginTop: 10,
@@ -699,7 +779,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
     alignSelf: 'flex-start',
@@ -722,8 +802,8 @@ const styles = StyleSheet.create({
   pasteTextArea: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 8,
-    fontSize: 11.5,
+    padding: 10,
+    fontSize: 12,
     minHeight: 85,
     maxHeight: 150,
     textAlignVertical: 'top',
@@ -735,8 +815,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   applyPasteBtnDisabled: {
     opacity: 0.5,
@@ -748,26 +828,35 @@ const styles = StyleSheet.create({
   formScroll: {
     marginTop: 8,
   },
-  inputGroup: {
-    marginBottom: 11,
+  formContent: {
+    paddingBottom: 10,
+  },
+  mobileStack: {
+    flexDirection: 'column',
+    width: '100%',
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    width: '100%',
+  },
+  inputGroup: {
+    marginBottom: 12,
+    width: '100%',
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   label: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   autoNoticeText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '700',
   },
   required: {
@@ -775,43 +864,46 @@ const styles = StyleSheet.create({
   },
   textInputWrapper: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 38,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
     justifyContent: 'center',
   },
   input: {
-    fontSize: 13,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    fontSize: 13.5,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   errorText: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 3,
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: 10,
     paddingTop: 12,
-    marginTop: 8,
+    marginTop: 6,
     borderTopWidth: 1,
   },
   cancelBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    height: 44,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitBtn: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 18,
+    borderRadius: 10,
   },
   submitText: {
     fontSize: 13,

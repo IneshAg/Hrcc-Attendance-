@@ -22,6 +22,8 @@ interface DropdownInputProps {
   helperText?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   onSelectOption?: (val: string) => void;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 export const DropdownInput: React.FC<DropdownInputProps> = ({
@@ -35,9 +37,29 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
   helperText,
   autoCapitalize = 'words',
   onSelectOption,
+  isOpen: controlledIsOpen,
+  onToggle,
 }) => {
   const { isDark, colors } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  const isMenuOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+
+  const toggleMenu = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
+
+  const closeMenu = () => {
+    if (onToggle && controlledIsOpen) {
+      onToggle();
+    } else {
+      setInternalIsOpen(false);
+    }
+  };
 
   // Normalize options to object format
   const normalizedOptions = options.map((opt) => {
@@ -52,7 +74,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
     if (onSelectOption) {
       onSelectOption(val);
     }
-    setIsOpen(false);
+    closeMenu();
   };
 
   return (
@@ -71,7 +93,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
           styles.inputWrapper,
           {
             backgroundColor: colors.inputBg,
-            borderColor: error ? colors.danger : isOpen ? colors.brandGreen : colors.inputBorder,
+            borderColor: error ? colors.danger : isMenuOpen ? colors.brandGreen : colors.inputBorder,
           },
         ]}
       >
@@ -88,16 +110,17 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
           style={[
             styles.chevronBtn,
             {
-              backgroundColor: isDark ? 'rgba(5, 199, 112, 0.1)' : '#ECFDF5',
+              backgroundColor: isDark ? 'rgba(5, 199, 112, 0.12)' : '#ECFDF5',
             },
           ]}
-          onPress={() => setIsOpen(!isOpen)}
+          onPress={toggleMenu}
           activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel={`Toggle options for ${label}`}
         >
           <Ionicons
-            name={isOpen ? 'chevron-up' : 'chevron-down'}
-            size={16}
+            name={isMenuOpen ? 'chevron-up' : 'chevron-down'}
+            size={18}
             color={isDark ? colors.brandGreen : colors.primary}
           />
         </TouchableOpacity>
@@ -106,7 +129,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
       {error ? <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text> : null}
 
       {/* Dropdown Options Collapsible Menu */}
-      {isOpen && (
+      {isMenuOpen && (
         <View
           style={[
             styles.dropdownMenu,
@@ -116,11 +139,11 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
             },
           ]}
         >
-          <View style={[styles.dropdownHeader, { borderBottomColor: colors.cardBorder }]}>
+          <View style={[styles.dropdownHeader, { borderBottomColor: isDark ? '#1F2E24' : '#E2E8F0' }]}>
             <Text style={[styles.dropdownHeaderTitle, { color: colors.textMuted }]}>
-              Select option or type custom above
+              Tap to choose or type custom value
             </Text>
-            <TouchableOpacity onPress={() => setIsOpen(false)}>
+            <TouchableOpacity onPress={closeMenu} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
               <Text style={[styles.dropdownDoneText, { color: colors.brandGreen }]}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -152,7 +175,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
                           color: isSelected
                             ? (isDark ? colors.brandGreen : colors.primary)
                             : colors.text,
-                          fontWeight: isSelected ? '800' : '500',
+                          fontWeight: isSelected ? '800' : '600',
                         },
                       ]}
                     >
@@ -168,7 +191,7 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
                   {isSelected && (
                     <Ionicons
                       name="checkmark-circle"
-                      size={17}
+                      size={18}
                       color={isDark ? colors.brandGreen : colors.primary}
                     />
                   )}
@@ -184,20 +207,21 @@ export const DropdownInput: React.FC<DropdownInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 11,
+    marginBottom: 12,
+    width: '100%',
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   label: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
   },
   helperText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '600',
   },
   required: {
@@ -207,75 +231,76 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingLeft: 10,
+    borderRadius: 10,
+    paddingLeft: 12,
     paddingRight: 6,
-    height: 38,
+    height: 44,
   },
   input: {
     flex: 1,
-    fontSize: 13,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    fontSize: 13.5,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
   },
   chevronBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 6,
+    width: 34,
+    height: 34,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   errorText: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 3,
   },
   dropdownMenu: {
     borderWidth: 1,
-    borderRadius: 8,
-    marginTop: 4,
+    borderRadius: 10,
+    marginTop: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
     zIndex: 100,
+    overflow: 'hidden',
   },
   dropdownHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   dropdownHeaderTitle: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '600',
   },
   dropdownDoneText: {
-    fontSize: 11.5,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
   },
   optionsScroll: {
-    maxHeight: 180,
+    maxHeight: 200,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   optionTextCol: {
     flex: 1,
     marginRight: 8,
   },
   optionLabel: {
-    fontSize: 12.5,
+    fontSize: 13,
   },
   optionHint: {
-    fontSize: 10.5,
-    marginTop: 1,
+    fontSize: 11,
+    marginTop: 2,
   },
 });

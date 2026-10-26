@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
@@ -29,6 +30,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   onConfirmImport,
 }) => {
   const { isDark, colors } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobile = windowWidth < 620;
+
   const [inputText, setInputText] = useState('');
   const [parsedRows, setParsedRows] = useState<ParsedMemberRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -79,16 +83,47 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.modalOverlay,
+            justifyContent: isMobile ? 'flex-end' : 'center',
+            padding: isMobile ? 0 : 16,
+          },
+        ]}
+      >
         <View
           style={[
             styles.modalCard,
             {
               backgroundColor: colors.surface,
               borderColor: colors.cardBorder,
+              maxWidth: isMobile ? '100%' : 640,
+              maxHeight: isMobile ? '92%' : '88%',
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              borderBottomLeftRadius: isMobile ? 0 : 22,
+              borderBottomRightRadius: isMobile ? 0 : 22,
+              paddingHorizontal: isMobile ? 16 : 22,
+              paddingTop: isMobile ? 12 : 20,
+              paddingBottom: isMobile ? (Platform.OS === 'ios' ? 32 : 18) : 20,
+              borderBottomWidth: isMobile ? 0 : 1,
             },
           ]}
         >
+          {/* Mobile Sheet Drag Handle */}
+          {isMobile && (
+            <View style={styles.dragHandleContainer}>
+              <View
+                style={[
+                  styles.dragHandle,
+                  { backgroundColor: isDark ? '#26362C' : '#CBD5E1' },
+                ]}
+              />
+            </View>
+          )}
+
           {/* Header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
             <View style={styles.headerTitleCol}>
@@ -346,22 +381,25 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 620,
-    maxHeight: '92%',
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  dragHandle: {
+    width: 38,
+    height: 4.5,
+    borderRadius: 3,
   },
   modalHeader: {
     flexDirection: 'row',
