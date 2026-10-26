@@ -140,24 +140,26 @@ export const saveMembers = async (members: ClubMember[]): Promise<void> => {
 };
 
 export const addMember = async (newMember: Omit<ClubMember, 'id'>): Promise<ClubMember> => {
+  const sanitize = (val?: string | null) => (val && val.trim() !== '' ? val.trim() : null);
+
   const fullPayload: Record<string, any> = {
-    name: newMember.name,
-    ra_no: newMember.raNo,
-    college_department: newMember.department || newMember.branch,
-    department: newMember.department,
-    branch: newMember.branch,
-    year: newMember.year || '',
-    section: newMember.section || '',
-    fa_name: newMember.faName,
-    fa_email: newMember.faEmail || null,
-    srm_email: newMember.srmEmail || null,
-    personal_email: newMember.personalEmail || null,
-    linkedin: newMember.linkedin || null,
-    github: newMember.github || null,
+    name: newMember.name.trim(),
+    ra_no: sanitize(newMember.raNo)?.toUpperCase() || null,
+    college_department: sanitize(newMember.department || newMember.branch) || null,
+    department: sanitize(newMember.department) || null,
+    branch: sanitize(newMember.branch) || null,
+    year: sanitize(newMember.year) || null,
+    section: sanitize(newMember.section) || null,
+    fa_name: sanitize(newMember.faName) || null,
+    fa_email: sanitize(newMember.faEmail) || null,
+    srm_email: sanitize(newMember.srmEmail) || null,
+    personal_email: sanitize(newMember.personalEmail) || null,
+    linkedin: sanitize(newMember.linkedin) || null,
+    github: sanitize(newMember.github) || null,
     domain: newMember.domain || 'None',
     role: newMember.role || 'Member',
-    email: newMember.srmEmail || newMember.personalEmail || null,
-    phone: newMember.phone || null,
+    email: sanitize(newMember.srmEmail) || sanitize(newMember.personalEmail) || null,
+    phone: sanitize(newMember.phone) || null,
     avatar_color: newMember.avatarColor || '#4F46E5',
   };
 
@@ -171,16 +173,16 @@ export const addMember = async (newMember: Omit<ClubMember, 'id'>): Promise<Club
   if (error && error.message && error.message.toLowerCase().includes('column')) {
     console.warn('New columns not yet added to Supabase, falling back to basic columns');
     const basicPayload = {
-      name: newMember.name,
-      ra_no: newMember.raNo,
-      college_department: newMember.department || newMember.branch,
-      year: newMember.year || '',
-      section: newMember.section || '',
-      fa_name: newMember.faName,
+      name: newMember.name.trim(),
+      ra_no: sanitize(newMember.raNo)?.toUpperCase() || null,
+      college_department: sanitize(newMember.department || newMember.branch) || null,
+      year: sanitize(newMember.year) || null,
+      section: sanitize(newMember.section) || null,
+      fa_name: sanitize(newMember.faName) || null,
       domain: newMember.domain || 'None',
       role: newMember.role || 'Member',
-      email: newMember.srmEmail || newMember.personalEmail || null,
-      phone: newMember.phone || null,
+      email: sanitize(newMember.srmEmail) || sanitize(newMember.personalEmail) || null,
+      phone: sanitize(newMember.phone) || null,
       avatar_color: newMember.avatarColor || '#4F46E5',
     };
     const res = await supabase.from('club_members').insert([basicPayload]).select().single();
@@ -241,46 +243,52 @@ export const bulkUpsertMembers = async (
     existingId?: string;
   }[]
 ): Promise<void> => {
-  for (const row of rows) {
-    if (row.isExisting && row.existingId) {
-      const updateData: Record<string, any> = {};
-      if (row.raNo) updateData.ra_no = row.raNo;
-      if (row.srmEmail) updateData.srm_email = row.srmEmail;
-      if (row.personalEmail) updateData.personal_email = row.personalEmail;
-      if (row.branch) updateData.branch = row.branch;
-      if (row.department) updateData.department = row.department;
-      if (row.year) updateData.year = row.year;
-      if (row.section) updateData.section = row.section;
-      if (row.faName) updateData.fa_name = row.faName;
-      if (row.faEmail) updateData.fa_email = row.faEmail;
-      if (row.linkedin) updateData.linkedin = row.linkedin;
-      if (row.github) updateData.github = row.github;
-      if (row.domain) updateData.domain = row.domain;
-      if (row.role) updateData.role = row.role;
-      if (row.phone) updateData.phone = row.phone;
+  const sanitize = (val?: string | null) => (val && val.trim() !== '' ? val.trim() : null);
 
-      if (Object.keys(updateData).length > 0) {
-        await supabase.from('club_members').update(updateData).eq('id', row.existingId);
+  for (const row of rows) {
+    try {
+      if (row.isExisting && row.existingId) {
+        const updateData: Record<string, any> = {};
+        if (row.raNo) updateData.ra_no = sanitize(row.raNo)?.toUpperCase() || null;
+        if (row.srmEmail) updateData.srm_email = sanitize(row.srmEmail);
+        if (row.personalEmail) updateData.personal_email = sanitize(row.personalEmail);
+        if (row.branch) updateData.branch = sanitize(row.branch);
+        if (row.department) updateData.department = sanitize(row.department);
+        if (row.year) updateData.year = sanitize(row.year);
+        if (row.section) updateData.section = sanitize(row.section);
+        if (row.faName) updateData.fa_name = sanitize(row.faName);
+        if (row.faEmail) updateData.fa_email = sanitize(row.faEmail);
+        if (row.linkedin) updateData.linkedin = sanitize(row.linkedin);
+        if (row.github) updateData.github = sanitize(row.github);
+        if (row.domain) updateData.domain = row.domain;
+        if (row.role) updateData.role = row.role;
+        if (row.phone) updateData.phone = sanitize(row.phone);
+
+        if (Object.keys(updateData).length > 0) {
+          await supabase.from('club_members').update(updateData).eq('id', row.existingId);
+        }
+      } else {
+        await addMember({
+          name: row.name,
+          raNo: sanitize(row.raNo) || undefined,
+          srmEmail: sanitize(row.srmEmail) || undefined,
+          personalEmail: sanitize(row.personalEmail) || undefined,
+          branch: sanitize(row.branch) || undefined,
+          department: sanitize(row.department) || undefined,
+          year: sanitize(row.year) || undefined,
+          section: sanitize(row.section) || undefined,
+          faName: sanitize(row.faName) || undefined,
+          faEmail: sanitize(row.faEmail) || undefined,
+          linkedin: sanitize(row.linkedin) || undefined,
+          github: sanitize(row.github) || undefined,
+          domain: row.domain || 'None',
+          role: row.role || 'Member',
+          phone: sanitize(row.phone) || undefined,
+          avatarColor: '#4F46E5',
+        });
       }
-    } else {
-      await addMember({
-        name: row.name,
-        raNo: row.raNo || '',
-        srmEmail: row.srmEmail || '',
-        personalEmail: row.personalEmail || '',
-        branch: row.branch || '',
-        department: row.department || '',
-        year: row.year || '',
-        section: row.section || '',
-        faName: row.faName || '',
-        faEmail: row.faEmail || '',
-        linkedin: row.linkedin || '',
-        github: row.github || '',
-        domain: row.domain || 'None',
-        role: row.role || 'Member',
-        phone: row.phone || '',
-        avatarColor: '#4F46E5',
-      });
+    } catch (rowErr) {
+      console.warn(`Error processing member ${row.name}:`, rowErr);
     }
   }
   // Refresh cache
