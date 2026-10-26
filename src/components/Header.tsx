@@ -9,6 +9,8 @@ interface HeaderProps {
   onNewMeeting?: () => void;
   onNewMember?: () => void;
   activeTab: 'meetings' | 'members' | 'analytics';
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNewMeeting,
   onNewMember,
   activeTab,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const { isDark, colors, toggleTheme } = useTheme();
 
@@ -67,6 +71,29 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.actionsRow}>
+        {/* Sync / Refresh Cloud Data Button */}
+        {onRefresh && (
+          <TouchableOpacity
+            style={[
+              styles.themeToggleBtn,
+              {
+                backgroundColor: isDark ? '#161E19' : '#ECFDF5',
+                borderColor: isDark ? '#26362C' : '#A7F3D0',
+              },
+            ]}
+            onPress={onRefresh}
+            activeOpacity={0.7}
+            accessibilityLabel="Refresh Data from Cloud"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={isRefreshing ? 'sync' : 'refresh'}
+              size={17}
+              color={isDark ? colors.brandGreen : colors.primary}
+            />
+          </TouchableOpacity>
+        )}
+
         {/* Dark / Light Mode Toggle Button */}
         <TouchableOpacity
           style={[

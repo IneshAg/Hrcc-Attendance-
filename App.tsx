@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -74,6 +76,7 @@ function AppContent() {
   // Members Tab Filters
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('All');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load all data
   const loadData = useCallback(async () => {
@@ -95,10 +98,42 @@ function AppContent() {
     }
   }, []);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadData();
+    setIsRefreshing(false);
+  };
+
   useEffect(() => {
     loadData();
 
-    // Supabase Real-time Synchronization across concurrent devices
+    // 1. Mobile Foreground Re-sync (when user switches back to the app / unlocks phone)
+    const appStateSub = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        loadData();
+      }
+    });
+
+    // 2. Web Window Focus & Visibility Re-sync (when user switches back to browser tab)
+    let handleFocus: (() => void) | null = null;
+    let handleVisibility: (() => void) | null = null;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      handleFocus = () => loadData();
+      handleVisibility = () => {
+        if (typeof document !== 'undefined' && !document.hidden) {
+          loadData();
+        }
+      };
+      window.addEventListener('focus', handleFocus);
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+
+    // 3. Gentle Heartbeat Polling (every 20s) to guarantee data freshness even if WebSockets sleep
+    const intervalId = setInterval(() => {
+      loadData();
+    }, 20000);
+
+    // 4. Supabase Real-time Synchronization across concurrent devices
     const channel = supabase
       .channel('hrcc_attendance_realtime')
       .on(
@@ -117,14 +152,26 @@ function AppContent() {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'attendance_records' },
+        { event: '*', schema: 'public', table: 'meeting_attendance' },
         () => {
           loadData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          loadData();
+        }
+      });
 
     return () => {
+      appStateSub.remove();
+      clearInterval(intervalId);
+      if (handleFocus && typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+      if (handleVisibility && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
       supabase.removeChannel(channel);
     };
   }, [loadData]);
@@ -325,12 +372,17 @@ function AppContent() {
         onNewMeeting={() => setIsNewMeetingVisible(true)}
         onNewMember={() => setIsNewMemberVisible(true)}
         activeTab={activeTab}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
       />
 
       {/* Navigation Tab Bar */}
       <TabBar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          loadData();
+        }}
         meetingsCount={meetings.length}
         membersCount={members.length}
       />
@@ -342,6 +394,8 @@ function AppContent() {
           <FlatList
             data={meetings}
             keyExtractor={(item) => item.id}
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
             renderItem={({ item }) => (
               <MeetingCard
                 meeting={item}
@@ -486,6 +540,8 @@ function AppContent() {
             <FlatList
               data={filteredMembersList}
               keyExtractor={(item) => item.id}
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
               renderItem={({ item }) => (
                 <MemberCard
                   member={item}

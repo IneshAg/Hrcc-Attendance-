@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -57,6 +57,13 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
     }
     return 'unmarked';
   });
+
+  // Sync state if attendance is updated remotely or in background
+  useEffect(() => {
+    if (initialAttendance) {
+      setAttendance(initialAttendance);
+    }
+  }, [initialAttendance]);
 
   // Member note modal state
   const [editingNoteMember, setEditingNoteMember] = useState<ClubMember | null>(null);
