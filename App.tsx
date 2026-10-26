@@ -453,6 +453,28 @@ export default function App() {
             memberStats={memberStats}
           />
         )}
+
+        {/* Floating Action Button (FAB) - Easy thumb & desktop access */}
+        {(activeTab === 'meetings' || activeTab === 'members') && (
+          <TouchableOpacity
+            style={styles.floatingActionButton}
+            onPress={() => {
+              if (activeTab === 'meetings') setIsNewMeetingVisible(true);
+              else if (activeTab === 'members') setIsNewMemberVisible(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityLabel={activeTab === 'meetings' ? 'Create New Meeting' : 'Add New Member'}
+          >
+            <Ionicons
+              name={activeTab === 'meetings' ? 'add' : 'person-add'}
+              size={20}
+              color="#FFFFFF"
+            />
+            <Text style={styles.fabText}>
+              {activeTab === 'meetings' ? 'New Meeting' : 'Add Member'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Modals */}
@@ -640,5 +662,29 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     maxWidth: 280,
+  },
+  floatingActionButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 30,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+    zIndex: 999,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });
