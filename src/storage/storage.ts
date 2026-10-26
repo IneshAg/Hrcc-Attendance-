@@ -220,6 +220,74 @@ export const deleteMember = async (memberId: string): Promise<void> => {
   await saveMembers(cached.filter((m) => m.id !== memberId));
 };
 
+export const bulkUpsertMembers = async (
+  rows: {
+    name: string;
+    raNo?: string;
+    srmEmail?: string;
+    personalEmail?: string;
+    branch?: string;
+    department?: string;
+    year?: string;
+    section?: string;
+    faName?: string;
+    faEmail?: string;
+    linkedin?: string;
+    github?: string;
+    domain?: string;
+    role?: string;
+    phone?: string;
+    isExisting?: boolean;
+    existingId?: string;
+  }[]
+): Promise<void> => {
+  for (const row of rows) {
+    if (row.isExisting && row.existingId) {
+      const updateData: Record<string, any> = {};
+      if (row.raNo) updateData.ra_no = row.raNo;
+      if (row.srmEmail) updateData.srm_email = row.srmEmail;
+      if (row.personalEmail) updateData.personal_email = row.personalEmail;
+      if (row.branch) updateData.branch = row.branch;
+      if (row.department) updateData.department = row.department;
+      if (row.year) updateData.year = row.year;
+      if (row.section) updateData.section = row.section;
+      if (row.faName) updateData.fa_name = row.faName;
+      if (row.faEmail) updateData.fa_email = row.faEmail;
+      if (row.linkedin) updateData.linkedin = row.linkedin;
+      if (row.github) updateData.github = row.github;
+      if (row.domain) updateData.domain = row.domain;
+      if (row.role) updateData.role = row.role;
+      if (row.phone) updateData.phone = row.phone;
+
+      if (Object.keys(updateData).length > 0) {
+        await supabase.from('club_members').update(updateData).eq('id', row.existingId);
+      }
+    } else {
+      await addMember({
+        name: row.name,
+        raNo: row.raNo || '',
+        srmEmail: row.srmEmail || '',
+        personalEmail: row.personalEmail || '',
+        branch: row.branch || '',
+        department: row.department || '',
+        year: row.year || '',
+        section: row.section || '',
+        faName: row.faName || '',
+        faEmail: row.faEmail || '',
+        linkedin: row.linkedin || '',
+        github: row.github || '',
+        domain: row.domain || 'None',
+        role: row.role || 'Member',
+        phone: row.phone || '',
+        avatarColor: '#4F46E5',
+      });
+    }
+  }
+  // Refresh cache
+  const refreshed = await getMembers();
+  await saveMembers(refreshed);
+};
+
 // --- MEETINGS (SUPABASE + OFFLINE CACHE) ---
 export const getMeetings = async (): Promise<Meeting[]> => {
   try {

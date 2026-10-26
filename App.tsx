@@ -20,8 +20,10 @@ import { MemberCard } from './src/components/MemberCard';
 import { RollCallScreen } from './src/components/RollCallScreen';
 import { NewMeetingModal } from './src/components/NewMeetingModal';
 import { NewMemberModal } from './src/components/NewMemberModal';
+import { BulkImportModal } from './src/components/BulkImportModal';
 import { ShareModal } from './src/components/ShareModal';
 import { AnalyticsView } from './src/components/AnalyticsView';
+import { supabase } from './src/services/supabase';
 
 import {
   ClubMember,
@@ -38,6 +40,7 @@ import {
   addMeeting,
   deleteMeeting,
   calculateMembersOverallStats,
+  bulkUpsertMembers,
   MemberOverallStats,
 } from './src/storage/storage';
 import { generateMembersListCSV, downloadFile } from './src/utils/exportUtils';
@@ -56,6 +59,7 @@ export default function App() {
   const [activeRollCallMeeting, setActiveRollCallMeeting] = useState<Meeting | null>(null);
   const [isNewMeetingVisible, setIsNewMeetingVisible] = useState(false);
   const [isNewMemberVisible, setIsNewMemberVisible] = useState(false);
+  const [isBulkImportVisible, setIsBulkImportVisible] = useState(false);
   const [shareModalData, setShareModalData] = useState<{
     meeting: Meeting;
     record: AttendanceRecord | null;
@@ -87,6 +91,36 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+
+    // Supabase Real-time Synchronization across concurrent devices
+    const channel = supabase
+      .channel('hrcc_attendance_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'meeting_attendance' },
+        () => {
+          getAllAttendance().then(setAttendanceRecords);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'club_members' },
+        () => {
+          getMembers().then(setMembers);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'meetings' },
+        () => {
+          getMeetings().then(setMeetings);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [loadData]);
 
   // Export Full Members Roster as CSV
@@ -101,6 +135,12 @@ export default function App() {
     }
     const csv = generateMembersListCSV(members);
     await downloadFile('club_members_roster.csv', csv, 'text/csv;charset=utf-8;');
+  };
+
+  // Bulk Import / Update Members from Text / Excel / CSV
+  const handleBulkImport = async (rows: any[]) => {
+    await bulkUpsertMembers(rows);
+    await loadData();
   };
 
   // Add Meeting
@@ -355,16 +395,27 @@ export default function App() {
                 ))}
               </View>
 
-              {members.length > 0 && (
+              <View style={styles.actionButtonsRow}>
                 <TouchableOpacity
-                  style={styles.exportRosterBtn}
-                  onPress={handleExportMembersCSV}
+                  style={styles.importRosterBtn}
+                  onPress={() => setIsBulkImportVisible(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="download-outline" size={15} color="#059669" />
-                  <Text style={styles.exportRosterText}>Export CSV</Text>
+                  <Ionicons name="flash-outline" size={14} color="#4F46E5" />
+                  <Text style={styles.importRosterText}>Import / Update</Text>
                 </TouchableOpacity>
-              )}
+
+                {members.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.exportRosterBtn}
+                    onPress={handleExportMembersCSV}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="download-outline" size={14} color="#059669" />
+                    <Text style={styles.exportRosterText}>Export CSV</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Members List */}
@@ -415,6 +466,13 @@ export default function App() {
         visible={isNewMemberVisible}
         onClose={() => setIsNewMemberVisible(false)}
         onSubmit={handleAddMember}
+      />
+
+      <BulkImportModal
+        visible={isBulkImportVisible}
+        existingMembers={members}
+        onClose={() => setIsBulkImportVisible(false)}
+        onConfirmImport={handleBulkImport}
       />
 
       <ShareModal
@@ -508,6 +566,27 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     flex: 1,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  importRosterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  importRosterText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
   },
   exportRosterBtn: {
     flexDirection: 'row',

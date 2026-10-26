@@ -48,9 +48,9 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
   const [raNo, setRaNo] = useState('');
   const [srmEmail, setSrmEmail] = useState('');
   const [personalEmail, setPersonalEmail] = useState('');
-  const [branch, setBranch] = useState('B.Tech CSE');
-  const [department, setDepartment] = useState('Computing');
-  const [year, setYear] = useState('2nd Year');
+  const [branch, setBranch] = useState('');
+  const [department, setDepartment] = useState('');
+  const [year, setYear] = useState('');
   const [section, setSection] = useState('');
   const [faName, setFaName] = useState('');
   const [faEmail, setFaEmail] = useState('');
@@ -65,10 +65,6 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
   const validate = () => {
     const errs: { [key: string]: string } = {};
     if (!name.trim()) errs.name = 'Student name is required';
-    if (!raNo.trim()) errs.raNo = 'Reg.No (RA No) is required';
-    if (!branch.trim()) errs.branch = 'Pursuing Branch is required';
-    if (!department.trim()) errs.department = 'Department is required';
-    if (!faName.trim()) errs.faName = 'Faculty Advisor name is required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -124,7 +120,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
             <View>
               <Text style={styles.modalTitle}>Add Crew Member</Text>
               <Text style={styles.modalSubtitle}>
-                Register student with SRM details, FA & social handles
+                Only name is required — other fields can be filled now or updated later
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -141,7 +137,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
                 </Text>
                 <TextInput
                   style={[styles.input, errors.name && styles.inputError]}
-                  placeholder="e.g. Inesh Agarwal"
+                  placeholder="e.g. Purva Jain"
                   value={name}
                   onChangeText={setName}
                   placeholderTextColor="#94A3B8"
@@ -150,28 +146,25 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
               </View>
 
               <View style={[styles.inputGroup, { flex: 2 }]}>
-                <Text style={styles.label}>
-                  Reg.No <Text style={styles.required}>*</Text>
-                </Text>
+                <Text style={styles.label}>Reg.No (Optional)</Text>
                 <TextInput
-                  style={[styles.input, errors.raNo && styles.inputError]}
-                  placeholder="RA2411003011496"
+                  style={styles.input}
+                  placeholder="RA241100301..."
                   value={raNo}
                   onChangeText={setRaNo}
                   autoCapitalize="characters"
                   placeholderTextColor="#94A3B8"
                 />
-                {errors.raNo && <Text style={styles.errorText}>{errors.raNo}</Text>}
               </View>
             </View>
 
             {/* 2. SRM Email & Personal Email */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>SRM Email</Text>
+                <Text style={styles.label}>SRM Email (Optional)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. ia1234@srmist.edu.in"
+                  placeholder="e.g. pj1234@srmist.edu.in"
                   value={srmEmail}
                   onChangeText={setSrmEmail}
                   keyboardType="email-address"
@@ -181,7 +174,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Personal Email</Text>
+                <Text style={styles.label}>Personal Email (Optional)</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. name@gmail.com"
@@ -197,31 +190,25 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
             {/* 3. Pursuing Branch & Department */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  Pursuing Branch <Text style={styles.required}>*</Text>
-                </Text>
+                <Text style={styles.label}>Pursuing Branch (Optional)</Text>
                 <TextInput
-                  style={[styles.input, errors.branch && styles.inputError]}
-                  placeholder="e.g. B.Tech CSE / IT / ECE"
+                  style={styles.input}
+                  placeholder="e.g. B.Tech CSE / IT"
                   value={branch}
                   onChangeText={setBranch}
                   placeholderTextColor="#94A3B8"
                 />
-                {errors.branch && <Text style={styles.errorText}>{errors.branch}</Text>}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  Department <Text style={styles.required}>*</Text>
-                </Text>
+                <Text style={styles.label}>Department (Optional)</Text>
                 <TextInput
-                  style={[styles.input, errors.department && styles.inputError]}
+                  style={styles.input}
                   placeholder="e.g. Computing / C.Tech"
                   value={department}
                   onChangeText={setDepartment}
                   placeholderTextColor="#94A3B8"
                 />
-                {errors.department && <Text style={styles.errorText}>{errors.department}</Text>}
               </View>
             </View>
 
@@ -260,17 +247,14 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
             {/* 5. FA Name & FA Email */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>
-                  FA Name <Text style={styles.required}>*</Text>
-                </Text>
+                <Text style={styles.label}>FA Name (Optional)</Text>
                 <TextInput
-                  style={[styles.input, errors.faName && styles.inputError]}
+                  style={styles.input}
                   placeholder="e.g. Dr Vinod D"
                   value={faName}
                   onChangeText={setFaName}
                   placeholderTextColor="#94A3B8"
                 />
-                {errors.faName && <Text style={styles.errorText}>{errors.faName}</Text>}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
