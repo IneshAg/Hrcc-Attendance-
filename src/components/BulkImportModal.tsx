@@ -98,18 +98,16 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <View style={styles.infoBanner}>
                 <Ionicons name="information-circle-outline" size={18} color="#4F46E5" />
                 <Text style={styles.infoBannerText}>
-                  You can paste simple lists of names (e.g. from WhatsApp/announcements) or copy
-                  cells directly from Excel. Existing members will automatically have their columns
-                  updated!
+                  Paste structured text blocks (Name: ..., Reg.No: ...), simple name lists, or copy columns directly from Excel/Sheets. Existing members will automatically have their columns updated!
                 </Text>
               </View>
 
               {/* Paste Text Area */}
-              <Text style={styles.inputLabel}>Paste Text, Excel Rows, or CSV Data:</Text>
+              <Text style={styles.inputLabel}>Paste Text, Key-Value Details, Excel Rows, or CSV:</Text>
               <TextInput
                 style={styles.textArea}
                 multiline
-                placeholder={`Examples:\n1. Simple Names:\nPurva Jain - Vice President\nShlok Agarwal - Vice President\nInesh Agarwal - Tech Head\n\n2. Or CSV / Excel Columns:\nName, Reg.No, SRM Email, Branch, Department, FA Name, Domain, Role`}
+                placeholder={`Examples:\n1. Structured Text Blocks (Auto-Updates Existing):\nName: Purva Jain\nReg.No: RA2411003010099\nSRM email: pj1234@srmist.edu.in\nPersonal Email: purva@gmail.com\nPursuing Branch: B.Tech CSE\nDepartment: Computing\nFA name: Dr Vinod D\n\n2. Simple Names:\nPurva Jain - Vice President\nInesh Agarwal - Tech Head\n\n3. Or CSV / Excel Rows:\nName, Reg.No, SRM Email, Branch, Department, FA Name, Domain, Role`}
                 value={inputText}
                 onChangeText={setInputText}
                 placeholderTextColor="#94A3B8"

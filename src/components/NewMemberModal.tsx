@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ClubMember } from '../types';
+import { parseKeyValueText } from '../utils/csvParser';
 
 interface NewMemberModalProps {
   visible: boolean;
+  initialMember?: ClubMember | null;
   onClose: () => void;
   onSubmit: (memberData: Omit<ClubMember, 'id'>) => void;
+  onUpdate?: (id: string, updatedData: Partial<ClubMember>) => Promise<void>;
 }
 
 const DOMAIN_OPTIONS = ['Technical', 'Creatives', 'Corporate', 'None'];
@@ -44,7 +47,13 @@ const AVATAR_COLORS = [
   '#D97706',
 ];
 
-export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose, onSubmit }) => {
+export const NewMemberModal: React.FC<NewMemberModalProps> = ({
+  visible,
+  initialMember,
+  onClose,
+  onSubmit,
+  onUpdate,
+}) => {
   const [name, setName] = useState('');
   const [raNo, setRaNo] = useState('');
   const [srmEmail, setSrmEmail] = useState('');
@@ -61,7 +70,49 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
   const [role, setRole] = useState('Member');
   const [phone, setPhone] = useState('');
 
+  const [isPasteBoxOpen, setIsPasteBoxOpen] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (initialMember) {
+      setName(initialMember.name || '');
+      setRaNo(initialMember.raNo || '');
+      setSrmEmail(initialMember.srmEmail || '');
+      setPersonalEmail(initialMember.personalEmail || '');
+      setBranch(initialMember.branch || '');
+      setDepartment(initialMember.department || '');
+      setYear(initialMember.year || '');
+      setSection(initialMember.section || '');
+      setFaName(initialMember.faName || '');
+      setFaEmail(initialMember.faEmail || '');
+      setLinkedin(initialMember.linkedin || '');
+      setGithub(initialMember.github || '');
+      setDomain(initialMember.domain || 'None');
+      setRole(initialMember.role || 'Member');
+      setPhone(initialMember.phone || '');
+    } else {
+      setName('');
+      setRaNo('');
+      setSrmEmail('');
+      setPersonalEmail('');
+      setBranch('');
+      setDepartment('');
+      setYear('');
+      setSection('');
+      setFaName('');
+      setFaEmail('');
+      setLinkedin('');
+      setGithub('');
+      setDomain('Technical');
+      setRole('Member');
+      setPhone('');
+    }
+    setErrors({});
+    setIsPasteBoxOpen(false);
+    setPasteText('');
+  }, [initialMember, visible]);
 
   const validate = () => {
     const errs: { [key: string]: string } = {};
@@ -70,45 +121,75 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleApplyPasteText = () => {
+    if (!pasteText.trim()) return;
+    const extracted = parseKeyValueText(pasteText);
+    if (extracted.name) setName(extracted.name);
+    if (extracted.raNo) setRaNo(extracted.raNo);
+    if (extracted.srmEmail) setSrmEmail(extracted.srmEmail);
+    if (extracted.personalEmail) setPersonalEmail(extracted.personalEmail);
+    if (extracted.branch) setBranch(extracted.branch);
+    if (extracted.department) setDepartment(extracted.department);
+    if (extracted.year) setYear(extracted.year);
+    if (extracted.section) setSection(extracted.section);
+    if (extracted.faName) setFaName(extracted.faName);
+    if (extracted.faEmail) setFaEmail(extracted.faEmail);
+    if (extracted.linkedin) setLinkedin(extracted.linkedin);
+    if (extracted.github) setGithub(extracted.github);
+    if (extracted.domain) setDomain(extracted.domain);
+    if (extracted.role) setRole(extracted.role);
+    if (extracted.phone) setPhone(extracted.phone);
+    setIsPasteBoxOpen(false);
+    setPasteText('');
+  };
+
+  const handleSubmit = async () => {
     if (!validate()) return;
+
+    if (initialMember && onUpdate) {
+      await onUpdate(initialMember.id, {
+        name: name.trim(),
+        raNo: raNo.trim().toUpperCase() || undefined,
+        srmEmail: srmEmail.trim() || undefined,
+        personalEmail: personalEmail.trim() || undefined,
+        branch: branch.trim() || undefined,
+        department: department.trim() || undefined,
+        year: year || undefined,
+        section: section.trim().toUpperCase() || undefined,
+        faName: faName.trim() || undefined,
+        faEmail: faEmail.trim() || undefined,
+        linkedin: linkedin.trim() || undefined,
+        github: github.trim() || undefined,
+        domain: domain === 'None' ? 'None' : domain,
+        role: role.trim() || 'Member',
+        phone: phone.trim() || undefined,
+      });
+      onClose();
+      return;
+    }
 
     const randomColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
     onSubmit({
       name: name.trim(),
-      raNo: raNo.trim().toUpperCase(),
-      srmEmail: srmEmail.trim(),
-      personalEmail: personalEmail.trim(),
-      branch: branch.trim(),
-      department: department.trim(),
-      year,
-      section: section.trim().toUpperCase(),
-      faName: faName.trim(),
-      faEmail: faEmail.trim(),
-      linkedin: linkedin.trim(),
-      github: github.trim(),
+      raNo: raNo.trim().toUpperCase() || undefined,
+      srmEmail: srmEmail.trim() || undefined,
+      personalEmail: personalEmail.trim() || undefined,
+      branch: branch.trim() || undefined,
+      department: department.trim() || undefined,
+      year: year || undefined,
+      section: section.trim().toUpperCase() || undefined,
+      faName: faName.trim() || undefined,
+      faEmail: faEmail.trim() || undefined,
+      linkedin: linkedin.trim() || undefined,
+      github: github.trim() || undefined,
       domain: domain === 'None' ? 'None' : domain,
       role: role.trim() || 'Member',
-      phone: phone.trim(),
+      phone: phone.trim() || undefined,
       avatarColor: randomColor,
       joinedDate: new Date().toISOString().split('T')[0],
     });
 
-    // Reset fields
-    setName('');
-    setRaNo('');
-    setSrmEmail('');
-    setPersonalEmail('');
-    setBranch('B.Tech CSE');
-    setDepartment('Computing');
-    setSection('');
-    setFaName('');
-    setFaEmail('');
-    setLinkedin('');
-    setGithub('');
-    setPhone('');
-    setErrors({});
     onClose();
   };
 
@@ -118,10 +199,14 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <View>
-              <Text style={styles.modalTitle}>Add Crew Member</Text>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.modalTitle}>
+                {initialMember ? `Edit: ${initialMember.name}` : 'Add Crew Member'}
+              </Text>
               <Text style={styles.modalSubtitle}>
-                Only name is required — other fields can be filled now or updated later
+                {initialMember
+                  ? 'Update academic info, contact, or paste details text to auto-fill'
+                  : 'Only name is required — other fields can be filled now or updated later'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -130,6 +215,50 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
           </View>
 
           <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
+            {/* Quick Auto-Fill Banner / Toggle */}
+            <TouchableOpacity
+              style={styles.pasteToggleBtn}
+              onPress={() => setIsPasteBoxOpen(!isPasteBoxOpen)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="flash" size={15} color="#4F46E5" />
+              <Text style={styles.pasteToggleText}>
+                {isPasteBoxOpen
+                  ? 'Hide Text Auto-Fill Box'
+                  : '⚡ Paste Details Text to Auto-Fill'}
+              </Text>
+              <Ionicons
+                name={isPasteBoxOpen ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color="#4F46E5"
+              />
+            </TouchableOpacity>
+
+            {isPasteBoxOpen && (
+              <View style={styles.pasteBoxContainer}>
+                <Text style={styles.pasteBoxHint}>
+                  Paste member details in any format (e.g. Name: ..., Reg.No: ..., SRM email: ...):
+                </Text>
+                <TextInput
+                  style={styles.pasteTextArea}
+                  multiline
+                  placeholder={`Name: ${name || 'Inesh Agarwal'}\nReg.No: RA2411003011496\nSRM email: ia3383@srmist.edu.in\nPersonal Email: name@gmail.com\nPursuing Branch: CSE\nDepartment: Computing\nFA name: Dr Vinod D\nFA email: drvinodd@srmist.edu.in\nLinkedIn: https://linkedin.com/in/username\nGitHub: https://github.com/username`}
+                  value={pasteText}
+                  onChangeText={setPasteText}
+                  placeholderTextColor="#94A3B8"
+                />
+                <TouchableOpacity
+                  style={[styles.applyPasteBtn, !pasteText.trim() && styles.applyPasteBtnDisabled]}
+                  onPress={handleApplyPasteText}
+                  disabled={!pasteText.trim()}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="checkmark-done" size={16} color="#FFFFFF" />
+                  <Text style={styles.applyPasteBtnText}>Apply Extracted Details</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* 1. Full Name & Reg.No */}
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 3 }]}>
@@ -399,7 +528,9 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({ visible, onClose
 
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
               <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-              <Text style={styles.submitText}>Save Member</Text>
+              <Text style={styles.submitText}>
+                {initialMember ? 'Save Changes' : 'Save Member'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -567,5 +698,69 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  pasteToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  pasteToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
+    flex: 1,
+    marginLeft: 6,
+  },
+  pasteBoxContainer: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+  },
+  pasteBoxHint: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 6,
+  },
+  pasteTextArea: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 12,
+    color: '#0F172A',
+    minHeight: 110,
+    maxHeight: 180,
+    textAlignVertical: 'top',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    marginBottom: 8,
+  },
+  applyPasteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#059669',
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  applyPasteBtnDisabled: {
+    opacity: 0.5,
+  },
+  applyPasteBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

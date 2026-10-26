@@ -37,6 +37,7 @@ import {
   getMeetings,
   getAllAttendance,
   addMember,
+  updateMember,
   deleteMember,
   addMeeting,
   deleteMeeting,
@@ -60,6 +61,7 @@ export default function App() {
   const [activeRollCallMeeting, setActiveRollCallMeeting] = useState<Meeting | null>(null);
   const [isNewMeetingVisible, setIsNewMeetingVisible] = useState(false);
   const [isNewMemberVisible, setIsNewMemberVisible] = useState(false);
+  const [editingMember, setEditingMember] = useState<ClubMember | null>(null);
   const [isBulkImportVisible, setIsBulkImportVisible] = useState(false);
   const [shareModalData, setShareModalData] = useState<{
     meeting: Meeting;
@@ -184,6 +186,16 @@ export default function App() {
     setMembers(updatedMembers);
     const updatedStats = await calculateMembersOverallStats(updatedMembers);
     setMemberStats(updatedStats);
+  };
+
+  // Update Member
+  const handleUpdateMember = async (id: string, updatedData: Partial<ClubMember>) => {
+    const updated = await updateMember(id, updatedData);
+    const updatedMembers = members.map((m) => (m.id === id ? { ...m, ...updated } : m));
+    setMembers(updatedMembers);
+    const updatedStats = await calculateMembersOverallStats(updatedMembers);
+    setMemberStats(updatedStats);
+    setEditingMember(null);
   };
 
   // Delete Member
@@ -449,6 +461,7 @@ export default function App() {
                 <MemberCard
                   member={item}
                   stats={memberStats[item.id]}
+                  onEdit={(m) => setEditingMember(m)}
                   onDelete={handleDeleteMember}
                 />
               )}
@@ -508,9 +521,14 @@ export default function App() {
       />
 
       <NewMemberModal
-        visible={isNewMemberVisible}
-        onClose={() => setIsNewMemberVisible(false)}
+        visible={isNewMemberVisible || editingMember !== null}
+        initialMember={editingMember}
+        onClose={() => {
+          setIsNewMemberVisible(false);
+          setEditingMember(null);
+        }}
         onSubmit={handleAddMember}
+        onUpdate={handleUpdateMember}
       />
 
       <BulkImportModal

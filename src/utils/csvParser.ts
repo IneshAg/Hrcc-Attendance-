@@ -21,13 +21,180 @@ export interface ParsedMemberRow {
 }
 
 /**
- * Parses raw text, TSV (Excel paste), or CSV into structured member rows
+ * Parses a single block of Key: Value text (e.g. copied from WhatsApp, forms, or messages)
+ */
+export const parseKeyValueText = (rawText: string): Partial<ClubMember> => {
+  if (!rawText || !rawText.trim()) return {};
+
+  const result: Partial<ClubMember> = {};
+  const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim().toLowerCase();
+    const val = line.slice(colonIdx + 1).trim();
+    if (!val) continue;
+
+    if (key.includes('name') && !key.includes('fa')) {
+      result.name = val;
+    } else if (
+      key.includes('reg') ||
+      key.includes('ra no') ||
+      key.includes('ra.no') ||
+      key.startsWith('ra')
+    ) {
+      result.raNo = val.toUpperCase();
+    } else if (key.includes('srm')) {
+      result.srmEmail = val;
+    } else if (key.includes('personal')) {
+      result.personalEmail = val;
+    } else if (key.includes('branch')) {
+      result.branch = val;
+    } else if (key.includes('dept') || key.includes('department')) {
+      result.department = val;
+    } else if (key.includes('year')) {
+      result.year = val;
+    } else if (key.includes('sec') || key.includes('section')) {
+      result.section = val.toUpperCase();
+    } else if (key.includes('fa') && key.includes('email')) {
+      result.faEmail = val;
+    } else if (key.includes('fa') || key.includes('advisor')) {
+      result.faName = val;
+    } else if (key.includes('link') || key.includes('linkedin')) {
+      result.linkedin = val;
+    } else if (key.includes('git') || key.includes('github')) {
+      result.github = val;
+    } else if (key.includes('role') || key.includes('designation')) {
+      result.role = val;
+    } else if (key.includes('domain')) {
+      result.domain = val;
+    } else if (key.includes('phone') || key.includes('contact') || key.includes('mobile')) {
+      result.phone = val;
+    } else if (key.includes('email') && !result.srmEmail) {
+      if (val.includes('@srmist')) result.srmEmail = val;
+      else result.personalEmail = val;
+    }
+  }
+
+  // Automatic domain mapping if role was extracted
+  if (result.role && (!result.domain || result.domain === 'None')) {
+    const lowerRole = result.role.toLowerCase();
+    if (lowerRole.includes('president') || lowerRole.includes('secretary')) {
+      result.domain = 'None';
+    } else if (lowerRole.includes('tech')) {
+      result.domain = 'Technical';
+    } else if (lowerRole.includes('creative')) {
+      result.domain = 'Creatives';
+    } else if (lowerRole.includes('corporate')) {
+      result.domain = 'Corporate';
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Parses raw text, Key-Value blocks, TSV (Excel paste), or CSV into structured member rows
  */
 export const parseBulkMembersText = (
   rawText: string,
   existingMembers: ClubMember[]
 ): ParsedMemberRow[] => {
   if (!rawText || !rawText.trim()) return [];
+
+  // Check if text is in Key-Value format (e.g. contains 'Name:' or 'Reg.No:' or 'SRM email:')
+  const isKeyValueFormat = /(name|reg|srm|branch|dept|fa)\s*:/i.test(rawText);
+
+  if (isKeyValueFormat) {
+    const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const parsedBlocks: Partial<ClubMember>[] = [];
+    let current: Partial<ClubMember> = {};
+
+    for (const line of lines) {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx === -1) continue;
+      const key = line.slice(0, colonIdx).trim().toLowerCase();
+      const val = line.slice(colonIdx + 1).trim();
+
+      // If we encounter a new 'name' and current already has a name, start a new block
+      if (key === 'name' && current.name) {
+        parsedBlocks.push(current);
+        current = {};
+      }
+
+      if (key.includes('name') && !key.includes('fa')) current.name = val;
+      else if (key.includes('reg') || key.includes('ra no') || key.includes('ra.no') || key.startsWith('ra')) current.raNo = val.toUpperCase();
+      else if (key.includes('srm')) current.srmEmail = val;
+      else if (key.includes('personal')) current.personalEmail = val;
+      else if (key.includes('branch')) current.branch = val;
+      else if (key.includes('dept') || key.includes('department')) current.department = val;
+      else if (key.includes('year')) current.year = val;
+      else if (key.includes('sec') || key.includes('section')) current.section = val.toUpperCase();
+      else if (key.includes('fa') && key.includes('email')) current.faEmail = val;
+      else if (key.includes('fa') || key.includes('advisor')) current.faName = val;
+      else if (key.includes('link') || key.includes('linkedin')) current.linkedin = val;
+      else if (key.includes('git') || key.includes('github')) current.github = val;
+      else if (key.includes('role')) current.role = val;
+      else if (key.includes('domain')) current.domain = val;
+      else if (key.includes('phone') || key.includes('contact')) current.phone = val;
+      else if (key.includes('email') && !current.srmEmail) {
+        if (val.includes('@srmist')) current.srmEmail = val;
+        else current.personalEmail = val;
+      }
+    }
+
+    if (current.name) {
+      parsedBlocks.push(current);
+    }
+
+    if (parsedBlocks.length > 0) {
+      return parsedBlocks.map((b) => {
+        const name = (b.name || '').trim();
+        const raNo = (b.raNo || '').trim().toUpperCase();
+
+        // Match with existing member by Reg.No or Name
+        const existing = existingMembers.find((m) => {
+          if (raNo && m.raNo && m.raNo.toUpperCase() === raNo) return true;
+          return m.name.toLowerCase().trim() === name.toLowerCase().trim();
+        });
+
+        let domain = b.domain || existing?.domain || 'None';
+        let role = b.role || existing?.role || 'Member';
+
+        const lowerRole = role.toLowerCase();
+        if (lowerRole.includes('president') || lowerRole.includes('secretary')) {
+          domain = 'None';
+        } else if (lowerRole.includes('tech')) {
+          domain = 'Technical';
+        } else if (lowerRole.includes('creative')) {
+          domain = 'Creatives';
+        } else if (lowerRole.includes('corporate')) {
+          domain = 'Corporate';
+        }
+
+        return {
+          name,
+          raNo: raNo || existing?.raNo || '',
+          srmEmail: b.srmEmail?.trim() || existing?.srmEmail || '',
+          personalEmail: b.personalEmail?.trim() || existing?.personalEmail || '',
+          branch: b.branch?.trim() || existing?.branch || '',
+          department: b.department?.trim() || existing?.department || '',
+          year: b.year?.trim() || existing?.year || '',
+          section: b.section?.trim() || existing?.section || '',
+          faName: b.faName?.trim() || existing?.faName || '',
+          faEmail: b.faEmail?.trim() || existing?.faEmail || '',
+          linkedin: b.linkedin?.trim() || existing?.linkedin || '',
+          github: b.github?.trim() || existing?.github || '',
+          domain,
+          role,
+          phone: b.phone?.trim() || existing?.phone || '',
+          isExisting: Boolean(existing),
+          existingId: existing?.id,
+        };
+      });
+    }
+  }
 
   const lines = rawText
     .split(/\r?\n/)

@@ -8,10 +8,11 @@ import { getRoleBadgeConfig } from '../utils/roleUtils';
 interface MemberCardProps {
   member: ClubMember;
   stats?: MemberOverallStats;
+  onEdit?: (member: ClubMember) => void;
   onDelete: (memberId: string) => void;
 }
 
-export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onDelete }) => {
+export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, onDelete }) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -83,14 +84,27 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onDelete 
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={() => onDelete(member.id)}
-          accessibilityLabel="Remove Member"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="trash-outline" size={16} color="#94A3B8" />
-        </TouchableOpacity>
+        <View style={styles.cardActions}>
+          {onEdit && (
+            <TouchableOpacity
+              style={styles.actionBtnEdit}
+              onPress={() => onEdit(member)}
+              accessibilityLabel="Edit Member Details"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="create-outline" size={17} color="#4F46E5" />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => onDelete(member.id)}
+            accessibilityLabel="Remove Member"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={16} color="#94A3B8" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Academic Details Grid */}
@@ -300,8 +314,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#7E22CE',
   },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionBtnEdit: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: '#EEF2FF',
+  },
   deleteBtn: {
     padding: 6,
+    borderRadius: 6,
   },
   academicGrid: {
     flexDirection: 'row',

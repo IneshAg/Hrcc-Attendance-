@@ -222,6 +222,53 @@ export const deleteMember = async (memberId: string): Promise<void> => {
   await saveMembers(cached.filter((m) => m.id !== memberId));
 };
 
+export const updateMember = async (
+  memberId: string,
+  updatedFields: Partial<ClubMember>
+): Promise<ClubMember> => {
+  const sanitize = (val?: string | null) => (val && val.trim() !== '' ? val.trim() : null);
+
+  const updateData: Record<string, any> = {};
+  if (updatedFields.name !== undefined) updateData.name = updatedFields.name.trim();
+  if (updatedFields.raNo !== undefined) updateData.ra_no = sanitize(updatedFields.raNo)?.toUpperCase() || null;
+  if (updatedFields.srmEmail !== undefined) updateData.srm_email = sanitize(updatedFields.srmEmail);
+  if (updatedFields.personalEmail !== undefined) updateData.personal_email = sanitize(updatedFields.personalEmail);
+  if (updatedFields.branch !== undefined) updateData.branch = sanitize(updatedFields.branch);
+  if (updatedFields.department !== undefined) {
+    updateData.department = sanitize(updatedFields.department);
+    updateData.college_department = sanitize(updatedFields.department);
+  }
+  if (updatedFields.year !== undefined) updateData.year = sanitize(updatedFields.year);
+  if (updatedFields.section !== undefined) updateData.section = sanitize(updatedFields.section);
+  if (updatedFields.faName !== undefined) updateData.fa_name = sanitize(updatedFields.faName);
+  if (updatedFields.faEmail !== undefined) updateData.fa_email = sanitize(updatedFields.faEmail);
+  if (updatedFields.linkedin !== undefined) updateData.linkedin = sanitize(updatedFields.linkedin);
+  if (updatedFields.github !== undefined) updateData.github = sanitize(updatedFields.github);
+  if (updatedFields.domain !== undefined) updateData.domain = updatedFields.domain;
+  if (updatedFields.role !== undefined) updateData.role = updatedFields.role;
+  if (updatedFields.phone !== undefined) updateData.phone = sanitize(updatedFields.phone);
+
+  const { data, error } = await supabase
+    .from('club_members')
+    .update(updateData)
+    .eq('id', memberId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase updateMember error:', error);
+    throw new Error(error.message);
+  }
+
+  const updatedAppMember = mapDbMemberToApp(data as DbMember);
+  const existing = await getMembers();
+  const nextList = existing.map((m) =>
+    m.id === memberId ? { ...m, ...updatedAppMember, ...updatedFields } : m
+  );
+  await saveMembers(nextList);
+  return { ...updatedAppMember, ...updatedFields };
+};
+
 export const bulkUpsertMembers = async (
   rows: {
     name: string;
