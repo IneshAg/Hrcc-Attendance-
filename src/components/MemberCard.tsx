@@ -163,7 +163,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
       </View>
 
       {/* Academic Details */}
-      {(member.branch || member.department || member.year || member.section) ? (
+      {(member.branch || member.department || member.year || member.section || member.faName) ? (
         <View
           style={[
             styles.academicBox,
@@ -188,6 +188,15 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
                 <Text style={[styles.academicLabel, { color: colors.textMuted }]}>Class</Text>
                 <Text style={[styles.academicValue, { color: colors.text }]}>
                   {member.year || '-'} {member.section ? `• Sec ${member.section}` : ''}
+                </Text>
+              </View>
+            ) : null}
+
+            {member.faName ? (
+              <View style={styles.academicItem}>
+                <Text style={[styles.academicLabel, { color: colors.textMuted }]}>Faculty Advisor (FA)</Text>
+                <Text style={[styles.academicValue, { color: colors.brandGreen }]} numberOfLines={1}>
+                  {member.faName}
                 </Text>
               </View>
             ) : null}
@@ -225,6 +234,23 @@ export const MemberCard: React.FC<MemberCardProps> = ({ member, stats, onEdit, o
             <Ionicons name="school-outline" size={12} color={isDark ? colors.brandGreen : colors.primary} />
             <Text style={[styles.contactText, { color: colors.textSecondary }]} numberOfLines={1}>
               {member.srmEmail}
+            </Text>
+          </View>
+        ) : null}
+
+        {member.faEmail ? (
+          <View
+            style={[
+              styles.contactItem,
+              {
+                backgroundColor: isDark ? '#161E19' : '#F8FAFC',
+                borderColor: isDark ? '#26362C' : '#E2E8F0',
+              },
+            ]}
+          >
+            <Ionicons name="mail-outline" size={12} color={colors.textMuted} />
+            <Text style={[styles.contactText, { color: colors.textSecondary }]} numberOfLines={1}>
+              FA: {member.faEmail}
             </Text>
           </View>
         ) : null}

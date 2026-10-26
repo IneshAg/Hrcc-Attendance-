@@ -377,7 +377,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
                     color: colors.text,
                   },
                 ]}
-                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE Core\nDomain: Technical\nRole: Lead`}
+                placeholder={`Name: John Doe\nReg.No: RA2411003010123\nPursuing Branch: CSE Core\nYear: 3rd Year\nSection: C2\nFA Name: Dr. Vinod D\nFA Email: vinodd@srmist.edu.in\nPhone: +91 98765 43210\nDomain: Technical\nRole: Lead`}
                 placeholderTextColor={colors.textMuted}
                 value={pasteText}
                 onChangeText={setPasteText}
@@ -650,9 +650,56 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
               </View>
             </View>
 
-            {/* 7. Phone Number */}
+            {/* 7. Faculty Advisor Details */}
+            <View style={isMobile ? styles.mobileStack : styles.row}>
+              <View style={[styles.inputGroup, !isMobile && { flex: 1.2 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Faculty Advisor (FA) Name</Text>
+                <View
+                  style={[
+                    styles.textInputWrapper,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                    },
+                  ]}
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="e.g. Dr. Vinod D"
+                    value={faName}
+                    onChangeText={setFaName}
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+
+              <View style={[styles.inputGroup, !isMobile && { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>FA Email ID</Text>
+                <View
+                  style={[
+                    styles.textInputWrapper,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                    },
+                  ]}
+                >
+                  <TextInput
+                    style={[styles.input, { color: colors.text }]}
+                    placeholder="vinodd@srmist.edu.in"
+                    value={faEmail}
+                    onChangeText={setFaEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* 8. Phone / WhatsApp Number */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Phone Number (Optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Phone / WhatsApp Number (Optional)</Text>
               <View
                 style={[
                   styles.textInputWrapper,

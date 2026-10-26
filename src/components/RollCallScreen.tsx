@@ -165,7 +165,9 @@ export const RollCallScreen: React.FC<RollCallScreenProps> = ({
         (m.domain && m.domain.toLowerCase().includes(q)) ||
         (m.role && m.role.toLowerCase().includes(q)) ||
         (m.branch && m.branch.toLowerCase().includes(q)) ||
-        (m.department && m.department.toLowerCase().includes(q));
+        (m.department && m.department.toLowerCase().includes(q)) ||
+        (m.faName && m.faName.toLowerCase().includes(q)) ||
+        (m.phone && m.phone.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
 
