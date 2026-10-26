@@ -699,7 +699,7 @@ export const NewMemberModal: React.FC<NewMemberModalProps> = ({
 
             {/* 8. Phone / WhatsApp Number */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Phone / WhatsApp Number (Optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Phone / WhatsApp Number</Text>
               <View
                 style={[
                   styles.textInputWrapper,
