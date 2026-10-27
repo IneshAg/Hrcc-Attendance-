@@ -16,16 +16,13 @@ interface HeaderProps {
   subtitle?: string;
   onNewMeeting?: () => void;
   onNewMember?: () => void;
-  activeTab: 'meetings' | 'members' | 'analytics';
+  activeTab?: 'meetings' | 'members' | 'analytics';
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   subtitle = 'SRM Student Chapter • Attendance System',
-  onNewMeeting,
-  onNewMember,
-  activeTab,
   onRefresh,
   isRefreshing = false,
 }) => {
@@ -154,57 +151,6 @@ export const Header: React.FC<HeaderProps> = ({
             color={isDark ? '#05C770' : '#475569'}
           />
         </TouchableOpacity>
-
-        {/* Quick Actions (Add Meeting / Add Member) - Only displayed on desktop/tablets (>=580px) to prevent title truncation on mobile */}
-        {!isNarrow && activeTab === 'meetings' && onNewMeeting && (
-          <TouchableOpacity
-            style={[
-              styles.primaryActionButton,
-              {
-                backgroundColor: colors.primary,
-                paddingHorizontal: 13,
-                height: 36,
-              },
-            ]}
-            onPress={onNewMeeting}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="add" size={17} color={isDark ? '#070707' : '#FFFFFF'} />
-            <Text
-              style={[
-                styles.primaryActionText,
-                { color: isDark ? '#070707' : '#FFFFFF' },
-              ]}
-            >
-              + New Meeting
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {!isNarrow && activeTab === 'members' && onNewMember && (
-          <TouchableOpacity
-            style={[
-              styles.primaryActionButton,
-              {
-                backgroundColor: colors.primary,
-                paddingHorizontal: 13,
-                height: 36,
-              },
-            ]}
-            onPress={onNewMember}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="person-add" size={14} color={isDark ? '#070707' : '#FFFFFF'} />
-            <Text
-              style={[
-                styles.primaryActionText,
-                { color: isDark ? '#070707' : '#FFFFFF' },
-              ]}
-            >
-              + Add Member
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -285,21 +231,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  primaryActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    borderRadius: 8,
-    shadowColor: '#05C770',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  primaryActionText: {
-    fontSize: 12,
-    fontWeight: '800',
   },
 });

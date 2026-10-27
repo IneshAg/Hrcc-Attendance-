@@ -379,9 +379,6 @@ function AppContent() {
       <Header
         title="HackerRank Campus Crew"
         subtitle="Attendance & Roll Call"
-        onNewMeeting={() => setIsNewMeetingVisible(true)}
-        onNewMember={() => setIsNewMemberVisible(true)}
-        activeTab={activeTab}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
       />
